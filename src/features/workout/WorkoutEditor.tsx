@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import Icon from '../../components/Icon';
+import SyncBadge from '../../components/SyncBadge';
 import { btn, card, input, Stat } from '../../components/ui';
 import { parseLocalDate, toLocalDate } from '../../domain/dates';
 import { formatWeight } from '../../domain/sets';
@@ -87,6 +88,7 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
           <Stat icon="weight" label="Volume" value={`${formatWeight(summary.volume)} kg`} />
           <Stat icon="sets" label="Sets" value={String(summary.sets)} />
         </div>
+        <SyncBadge className="mt-2" />
       </header>
 
       <div

@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router';
 import Icon from './components/Icon';
 import TabBar from './components/TabBar';
 import { formatClock } from './domain/workout';
 import { useDbQuery, useNow } from './hooks/useDbQuery';
-import { useSyncFailing } from './hooks/useSyncFailing';
+import SyncBadge from './components/SyncBadge';
+import { refreshLastSets } from './repositories/lastSets';
 import { getActiveWorkout } from './repositories/workouts';
 import TodayScreen from './features/today/TodayScreen';
 import HistoryScreen from './features/history/HistoryScreen';
@@ -18,10 +20,10 @@ export default function App() {
   const { pathname } = useLocation();
   // The logging screens are full-screen, like Hevy.
   const fullScreen = pathname === '/workout' || pathname.endsWith('/edit');
+  useEffect(() => void refreshLastSets(), []); // keep the offline "Previous" copy fresh
 
   return (
     <div className={`flex h-full flex-col ${fullScreen ? '' : 'pt-[env(safe-area-inset-top)]'}`}>
-      <SyncBanner />
       {/* Logging screens manage their own scrolling (fixed header + scrolling body). */}
       <main className={fullScreen ? 'min-h-0 flex-1' : 'scroll-area min-h-0 flex-1 px-4 pt-3 pb-36'}>
         <Routes>
@@ -40,20 +42,11 @@ export default function App() {
       {!fullScreen && (
         // Floats over the content (which has room to scroll past it); only the bars take touches.
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 flex flex-col gap-2 px-3 pb-[max(0.5rem,calc(env(safe-area-inset-bottom)-0.5rem))]">
+          <SyncBadge />
           <ActiveWorkoutBar />
           <TabBar />
         </div>
       )}
-    </div>
-  );
-}
-
-/** Shown while workout changes are waiting for the server. */
-function SyncBanner() {
-  if (!useSyncFailing()) return null;
-  return (
-    <div role="status" className="shrink-0 bg-amber-500 px-4 py-1 text-center text-xs font-semibold text-neutral-950">
-      Offline — changes will sync
     </div>
   );
 }
