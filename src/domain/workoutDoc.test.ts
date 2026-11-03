@@ -11,11 +11,13 @@ import {
   newWorkout,
   patchExerciseInfo,
   removeExercise,
+  remapExerciseIds,
   reorderExercises,
   replaceExercise,
   setExerciseNote,
   setGrip,
   uncompleteSet,
+  usesTempExercise,
   updateSetValue,
   type ExerciseInfo,
   type WorkoutDetail,
@@ -183,5 +185,17 @@ describe('finalizeWorkout', () => {
     expect(done).toMatchObject({ title: 'Keep me', notes: 'old', finishedAt: null });
     expect(sets(done)).toHaveLength(1);
     expect(finalizeWorkout(w, [], { notes: 'new' }).notes).toBe('new');
+  });
+});
+
+describe('exercises created offline', () => {
+  it('re-points temporary ids to the real ones', () => {
+    const offline: ExerciseInfo = { ...bench, id: -1, name: 'Cable fly' };
+    const w = addExercises(base(), [item(1, offline), item(2, row)]);
+    expect(usesTempExercise(w)).toBe(true);
+    const fixed = remapExerciseIds(w, new Map([[-1, 77]]));
+    expect(fixed.exercises.map((e) => e.exerciseId)).toEqual([77, 2]);
+    expect(usesTempExercise(fixed)).toBe(false);
+    expect(remapExerciseIds(fixed, new Map([[-1, 77]]))).toBe(fixed); // nothing to change: same object
   });
 });

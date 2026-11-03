@@ -1,4 +1,5 @@
-import { api, ApiError } from '../api/client';
+import { api, ApiError, isNetworkError } from '../api/client';
+import { notifyChange } from '../api/events';
 import {
   EQUIPMENT,
   GRIP_NAMES,
@@ -14,24 +15,40 @@ import {
   type MuscleGroup,
 } from '../domain/exercises';
 import { patchExerciseInfo } from '../domain/workoutDoc';
-import { dropCleanDocs, patchOpenDocs } from './workoutStore';
+import { cachedList, cacheList, isTempId, pendingExercises, queueExercise } from './exerciseCache';
+import { dropCleanDocs, patchOpenDocs, syncExercises } from './workoutStore';
 
 // The exercise types and constants live in domain/; re-exported so screens import from one place.
 export { EQUIPMENT, GRIP_NAMES, GRIP_SET_NAMES, GRIP_SETS, GRIPS, label, MUSCLE_GROUPS };
 export type { Equipment, Exercise, Grip, GripSet, MuscleGroup };
 
-export const listExercises = (archived = false): Promise<Exercise[]> =>
-  api<Exercise[]>('GET', `/exercises${archived ? '?archived=1' : ''}`);
-
-export async function getExercise(id: number): Promise<Exercise | undefined> {
+/** Library from the server, kept on the device; offline it comes from that copy plus exercises waiting to upload. */
+export async function listExercises(archived = false): Promise<Exercise[]> {
   try {
-    return await api<Exercise>('GET', `/exercises/${id}`);
+    await syncExercises(); // so exercises created offline show up with their real ids
+    const list = await api<Exercise[]>('GET', `/exercises${archived ? '?archived=1' : ''}`);
+    cacheList(archived, list);
+    return list;
   } catch (e) {
-    if (e instanceof ApiError && e.status === 404) return undefined;
-    throw e;
+    if (!isNetworkError(e)) throw e;
+    const list = cachedList(archived);
+    return archived ? list : [...list, ...pendingExercises()].sort((x, y) => x.name.localeCompare(y.name));
   }
 }
 
+export async function getExercise(id: number): Promise<Exercise | undefined> {
+  if (!isTempId(id)) {
+    try {
+      return await api<Exercise>('GET', `/exercises/${id}`);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return undefined;
+      if (!isNetworkError(e)) throw e;
+    }
+  }
+  return [...cachedList(false), ...cachedList(true), ...pendingExercises()].find((e) => e.id === id);
+}
+
+/** Saved on the server, or, with no connection, queued on the device and uploaded when it returns. */
 export async function createExercise(e: {
   name: string;
   muscleGroup: MuscleGroup;
@@ -39,7 +56,20 @@ export async function createExercise(e: {
   image: string | null;
   gripSet: GripSet | null;
 }): Promise<number> {
-  return (await api<Exercise>('POST', '/exercises', e)).id;
+  const body = { ...e, name: e.name.trim() };
+  if (!body.name) throw new Error('Enter a name.');
+  try {
+    return (await api<Exercise>('POST', '/exercises', body)).id;
+  } catch (err) {
+    if (!isNetworkError(err)) throw err;
+    const taken = [...cachedList(false), ...cachedList(true), ...pendingExercises()];
+    if (taken.some((x) => x.name.toLowerCase() === body.name.toLowerCase())) {
+      throw new Error(`"${body.name}" already exists (it may be archived).`, { cause: err });
+    }
+    const id = queueExercise(body);
+    notifyChange();
+    return id;
+  }
 }
 
 /** Custom exercises without history are deleted; anything with history is archived (SPEC §4). */

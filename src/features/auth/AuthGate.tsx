@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type FormE
 import * as authApi from '../../api/auth';
 import { isNetworkError } from '../../api/client';
 import { btn, input } from '../../components/ui';
+import { forgetExercises } from '../../repositories/exerciseCache';
 
 const LAST_USER_KEY = 'ttp.lastUser';
 
@@ -62,6 +63,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await authApi.logout();
     remember(null);
+    forgetExercises();
     // The SQLite worker, caches and route state all belong to the previous account.
     location.reload();
   }, []);

@@ -1,10 +1,11 @@
-import { api } from '../api/client';
+import { api, isNetworkError } from '../api/client';
 import { parseLocalDate, today } from '../domain/dates';
 import type { Rating } from '../domain/checkIn';
-import { defaultGrip, type Exercise, type Grip } from '../domain/exercises';
+import { defaultGrip, type Grip } from '../domain/exercises';
 import type { CompletedValues, SetType, SetValues } from '../domain/sets';
 import * as doc from '../domain/workoutDoc';
 import type { Workout, WorkoutDetail } from '../domain/workoutDoc';
+import { listExercises } from './exercises';
 import { create, loadActive, loadWorkout, mutate, remove, settled } from './workoutStore';
 
 export { AUTO_REPS, AUTO_WEIGHT } from '../domain/workoutDoc';
@@ -42,10 +43,16 @@ export const updateWorkout = (
 
 /** The "Previous" column for an exercise in this workout: the latest earlier finished one. */
 async function previousFor(w: WorkoutDetail, exerciseId: number, grip: Grip | null): Promise<SetValues[]> {
+  if (exerciseId < 0) return []; // created offline: no history yet
   const q = new URLSearchParams({ date: w.date, startedAt: w.startedAt, excludeWorkoutId: w.id });
   if (grip) q.set('grip', grip);
   await settled(); // a workout finished a moment ago must have reached the server
-  return api<SetValues[]>('GET', `/exercises/${exerciseId}/previous?${q}`);
+  try {
+    return await api<SetValues[]>('GET', `/exercises/${exerciseId}/previous?${q}`);
+  } catch (e) {
+    if (isNetworkError(e)) return []; // offline: log without the "Previous" column
+    throw e;
+  }
 }
 
 /**
@@ -55,7 +62,7 @@ async function previousFor(w: WorkoutDetail, exerciseId: number, grip: Grip | nu
 export async function addExercises(workoutId: string, exerciseIds: number[]) {
   const w = await loadWorkout(workoutId);
   if (!w) return;
-  const all = await api<Exercise[]>('GET', '/exercises');
+  const all = await listExercises();
   const items = await Promise.all(
     exerciseIds.map(async (id) => {
       const exercise = all.find((e) => e.id === id);
@@ -76,7 +83,7 @@ export async function replaceExercise(workoutId: string, weId: string, exerciseI
   const w = await loadWorkout(workoutId);
   const current = w?.exercises.find((e) => e.id === weId);
   if (!w || !current) return;
-  const exercise = (await api<Exercise[]>('GET', '/exercises')).find((e) => e.id === exerciseId);
+  const exercise = (await listExercises()).find((e) => e.id === exerciseId);
   if (!exercise) throw new Error('Exercise not found');
   const previous = await previousFor(w, exerciseId, doc.replacedGrip(current, exercise.gripSet));
   return mutate(workoutId, (d) => doc.replaceExercise(d, weId, exercise, previous));

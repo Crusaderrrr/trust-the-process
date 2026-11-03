@@ -147,6 +147,12 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Client registers the device on the first completed set (`notify.ts`); `public/push-sw.js` shows the notification
 - [ ] Not verified: real delivery. Chrome in this setup can't grant notification permission, and iPhone push needs HTTPS (Funnel). Scheduler, cancel/reschedule, gone-subscription cleanup and the endpoint allow-list are unit tested with a fake sender
 
+## Feedback round 8 (2026-11-03)
+- [x] Calendar: tapping a day with exactly one workout opens it; the options sheet stays for empty days and days with several
+- [x] Weekly plan removed: days are only done / skipped / no workout (no planned / missed / extra). Plan screen, `/api/plan`, missed-days banner gone; migration 008 drops `plan_version` / `plan_day`
+- [x] Offline exercises: the library is cached in `localStorage` after every load and read from there when the server is unreachable; exercises created offline are queued with a negative temporary id, uploaded when the connection returns, and open workouts are re-pointed to the real id. A workout with a not-yet-uploaded exercise waits (retry with backoff) instead of being sent. Tests: `workoutDoc.test.ts` (id remap)
+- [ ] Not verified: server tests (Docker wasn't running, so migration 008 and the trimmed `data.test.ts` haven't run) and the offline flow in a browser. Offline, "Previous" is empty and editing an exercise (favourite, grip, rest, photo) still needs a connection
+
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).
 - Missed-day banner end-to-end (needs a plan older than the missed day; logic is unit tested).

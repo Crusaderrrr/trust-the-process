@@ -220,6 +220,15 @@ export const patchExerciseInfo = (
   exercises: w.exercises.map((e) => (e.exerciseId === exerciseId ? { ...e, ...patch } : e)),
 });
 
+/** True while the workout uses an exercise created offline (negative temporary id) that the server doesn't know yet. */
+export const usesTempExercise = (w: WorkoutDetail): boolean => w.exercises.some((e) => e.exerciseId < 0);
+
+/** Swaps temporary exercise ids for the real ones the server assigned. Same object when nothing changes. */
+export function remapExerciseIds(w: WorkoutDetail, ids: Map<number, number>): WorkoutDetail {
+  if (!w.exercises.some((e) => ids.has(e.exerciseId))) return w;
+  return { ...w, exercises: w.exercises.map((e) => ({ ...e, exerciseId: ids.get(e.exerciseId) ?? e.exerciseId })) };
+}
+
 // ---- sets ----
 
 const mapSets = (w: WorkoutDetail, fn: (sets: WorkoutSet[], e: WorkoutExercise) => WorkoutSet[]): WorkoutDetail => ({

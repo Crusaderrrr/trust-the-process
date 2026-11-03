@@ -1,6 +1,7 @@
 import { api, ApiError, isNetworkError } from '../api/client';
 import { notifyChange } from '../api/events';
-import type { WorkoutDetail } from '../domain/workoutDoc';
+import { remapExerciseIds, usesTempExercise, type WorkoutDetail } from '../domain/workoutDoc';
+import { flushPending, hasPending } from './exerciseCache';
 
 // Workout documents live here while they are open. An edit applies to the cached
 // document at once, is mirrored to localStorage, and the whole document is PUT to the server after
@@ -56,6 +57,20 @@ function remember(doc: WorkoutDetail): Entry {
   return entry;
 }
 
+/**
+ * Uploads exercises created offline and re-points open workouts from their temporary ids to the real
+ * ones. A workout can't be saved before this: the server doesn't know the temporary ids.
+ */
+export async function syncExercises(): Promise<void> {
+  const ids = await flushPending();
+  if (!ids.size) return;
+  for (const entry of cache.values()) {
+    entry.doc = remapExerciseIds(entry.doc, ids);
+    if (entry.dirty) saveLocal(entry.doc);
+  }
+  notifyChange();
+}
+
 /** One save attempt (or the one already running). Resolves true when the server has the document. */
 function flush(entry: Entry): Promise<boolean> {
   clearTimeout(entry.timer);
@@ -65,6 +80,9 @@ function flush(entry: Entry): Promise<boolean> {
   entry.saving = (async () => {
     entry.dirty = false;
     try {
+      if (usesTempExercise(entry.doc)) await syncExercises();
+      // Still offline: fail like a network error so the save is retried with backoff.
+      if (usesTempExercise(entry.doc)) throw new TypeError('An exercise created offline is not on the server yet');
       await api('PUT', `/workouts/${id}`, toBody(entry.doc));
       entry.retries = 0;
       if (entry.dirty) schedule(entry, 0); // edited while the request was in flight
@@ -112,11 +130,15 @@ function touch(entry: Entry, delay = DEBOUNCE_MS) {
 }
 
 // Flush when the app goes to the background or the connection returns.
-document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flushAll());
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushAll();
+  else if (hasPending()) void syncExercises();
+});
 window.addEventListener('pagehide', flushAll);
 window.addEventListener('online', () => {
   for (const e of cache.values()) e.retries = 0;
   flushAll();
+  if (hasPending()) void syncExercises();
 });
 
 // Copies left in localStorage by a closed tab / killed app: reopen them and finish the save.
@@ -133,6 +155,7 @@ try {
 } catch {
   /* unreadable storage: fall back to the server's copy */
 }
+if (hasPending()) void syncExercises(); // exercises created offline in an earlier session
 
 /** Cached document, else fetched; null if the workout does not exist. */
 export async function loadWorkout(id: string): Promise<WorkoutDetail | null> {
@@ -149,7 +172,15 @@ export async function loadWorkout(id: string): Promise<WorkoutDetail | null> {
 
 export async function loadActive(): Promise<WorkoutDetail | null> {
   if (activeId !== undefined) return activeId ? loadWorkout(activeId) : null;
-  const { workout } = await api<{ workout: WorkoutDetail | null }>('GET', '/workouts/active');
+  let workout: WorkoutDetail | null;
+  try {
+    ({ workout } = await api<{ workout: WorkoutDetail | null }>('GET', '/workouts/active'));
+  } catch (e) {
+    // Offline with no local copy: let a new workout be started; the answer isn't remembered, so the
+    // server is asked again next time.
+    if (isNetworkError(e)) return null;
+    throw e;
+  }
   if (!workout) return (activeId = null);
   activeId = workout.id;
   return (cache.get(workout.id) ?? remember(workout)).doc;
