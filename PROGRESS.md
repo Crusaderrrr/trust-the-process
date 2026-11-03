@@ -91,7 +91,7 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Per-session exercise note (migration 7); shown in History detail and the calendar day sheet
 - [x] Notifications: real "time's up" system notification (see log); sounds removed
 
-## v2 self-hosted full-stack (branch `fullstack`, see `MIGRATION.md`)
+## v2 self-hosted full-stack (merged into `main` 2026-10-27; the original plan doc was removed)
 ### Phase 7 — Server skeleton ✅
 - [x] Hono + postgres.js server (`server/`), migrations runner (`schema_migrations`, advisory lock, one transaction)
 - [x] `001_init.sql`: `app_user`, `session`, `invite`, `user_settings`

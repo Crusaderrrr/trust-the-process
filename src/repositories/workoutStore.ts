@@ -2,7 +2,7 @@ import { api, ApiError, isNetworkError } from '../api/client';
 import { notifyChange } from '../api/events';
 import type { WorkoutDetail } from '../domain/workoutDoc';
 
-// Workout documents live here while they are open (MIGRATION.md §7). An edit applies to the cached
+// Workout documents live here while they are open. An edit applies to the cached
 // document at once, is mirrored to localStorage, and the whole document is PUT to the server after
 // a short debounce. While the server is unreachable the PUT is retried with backoff and the local
 // copy survives a reload. Newest document wins.

@@ -4,7 +4,7 @@ import { defaultGrip, type Exercise, type Grip, type GripSet, type MuscleGroup }
 import { nextSetValues, type CompletedValues, type SetType, type SetValues } from './sets';
 import { defaultTitle } from './workout';
 
-// A workout is edited as one document and saved whole (MIGRATION.md §7). Every edit is a pure
+// A workout is edited as one document and saved whole. Every edit is a pure
 // function (doc → doc); the repository applies it to the cached document and syncs it.
 
 export type Workout = {

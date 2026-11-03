@@ -14,7 +14,7 @@ export class ApiError extends Error {
 export const isNetworkError = (e: unknown): boolean => !(e instanceof ApiError);
 
 // JSON content type on every request, including body-less POSTs: the server rejects anything else
-// for state-changing calls (CSRF guard, MIGRATION §6).
+// for state-changing calls (CSRF guard).
 export async function api<T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, {
     method,

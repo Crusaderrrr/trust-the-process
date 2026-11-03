@@ -50,7 +50,7 @@ export default function App() {
   );
 }
 
-/** Shown while workout changes are waiting for the server (MIGRATION §7). */
+/** Shown while workout changes are waiting for the server. */
 function SyncBanner() {
   if (!useSyncFailing()) return null;
   return (

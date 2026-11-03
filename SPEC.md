@@ -1,5 +1,10 @@
 # Trust The Process (TTP) — Specification (v1 / MVP)
 
+> **Status (2026-11):** this is the original v1 spec. Storage, deployment and "no backend/accounts"
+> (§1–§3, §4's SQLite specifics, §7 OPFS gotchas, §8, backup in §6) are **superseded** — the app now
+> runs on a Node + Postgres server (see `DEPLOY.md`, `server/`). Domain logic (§5), screen behaviour
+> (§6) and the exercise seed (§10) are still the reference.
+
 A personal, offline-first workout tracker, loosely inspired by Hevy (logging flow, "previous"
 hints, per-exercise progress). Installed on one iPhone as a PWA ("Add to Home Screen"), hosted
 on GitHub Pages. No backend, no accounts, no social features. All data lives on the device in

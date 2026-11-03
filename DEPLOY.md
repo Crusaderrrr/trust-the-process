@@ -1,7 +1,7 @@
 # DEPLOY.md — running TTP on the laptop
 
 Target: an old laptop with **Linux Mint**, running the app and Postgres with Docker Compose and
-exposed to the internet through **Tailscale Funnel** (MIGRATION.md §3–4). Everything below is run
+exposed to the internet through **Tailscale Funnel**. Everything below is run
 **on the laptop**, in a terminal. Replace `<you>` with the laptop's username.
 
 ```
