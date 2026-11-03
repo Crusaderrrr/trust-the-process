@@ -1,60 +1,42 @@
 # CLAUDE.md — Trust The Process (TTP)
 
-Personal offline-first workout tracker (Hevy-inspired). React + TypeScript PWA, SQLite (WASM,
-OPFS) in a Web Worker, hosted on GitHub Pages as a user site (`https://crusaderrrr.github.io/`,
-base `/`), used on one iPhone. **The full spec
-is `SPEC.md` — read the relevant section before every task.** Current status lives in
-`PROGRESS.md` — update it when a task or phase changes state.
+Workout tracker (Hevy-inspired). React + TypeScript PWA talking to a Hono + Postgres server
+(`server/`), invite-only accounts, self-hosted via Docker Compose (see `DEPLOY.md`). Started as an
+offline-only SQLite/OPFS app on GitHub Pages; that was replaced in v2 (merged to `main`
+2026-10-27). `SPEC.md` is the original v1 spec: domain logic, screens and exercise seed still
+apply, storage/deploy parts are superseded. Current status lives in `PROGRESS.md` — update it when
+a task changes state. The plan to go public is `ROADMAP.md`; unscheduled ideas live in `IDEAS.md`.
 
 ## Working agreement
-- Phases (SPEC §9) are built in order and pushed as each is finished; I test on the iPhone and
-  send corrections as we go (no need to wait for my confirmation between phases).
-- No plan approval needed: implement directly and track progress in `PROGRESS.md` (tick tasks,
-  add a dated log line per phase/milestone).
-- Don't add dependencies beyond SPEC §2 without asking first.
+- No plan approval needed for small work: implement directly, track in `PROGRESS.md`.
+- Don't add dependencies without asking first.
 - Small, focused commits with clear messages. One concern per commit.
 - If the spec is ambiguous or seems wrong, say so and propose a fix — don't silently improvise.
 
 ## Commands
-- `npm run dev` — dev server
-- `npm test` — Vitest (domain logic)
-- `npm run build` — production build to `dist/`
-- `npm run lint` / `npm run typecheck`
+- `npm run db:dev` — local Postgres (Docker, port 5433); server tests need it
+- `npm run dev:server` — API (needs `DATABASE_URL`); `npm run dev` — Vite, proxies `/api`
+- `npm test` — Vitest · `npm run build` · `npm run lint` · `npm run typecheck`
+- `docker compose up -d --build` — production stack (see `.env.example`)
 
 Run `typecheck` and `test` before saying a task is done.
 
-v2 (`fullstack` branch, `server/`): `npm run db:dev` starts the local Postgres (Docker, port 5433) —
-server tests need it. `npm run dev:server` runs the API (needs `DATABASE_URL`), `npm run dev` proxies
-`/api` to it. `docker compose up -d --build` = production stack (see `.env.example`).
-
 ## Architecture rules
-- All SQL runs in `src/db/db.worker.ts`. UI → `repositories/` → `db/client.ts` (RPC) → worker.
-- SQL only in `src/repositories/` and `src/db/migrations.ts`. Never in components or hooks.
-- `src/domain/` is pure TypeScript: no React, no DB imports. Every function there has tests.
-- Schema changes = new migration that bumps `PRAGMA user_version`. Never edit an applied migration.
-- `PRAGMA foreign_keys = ON` on every connection.
-- Persist every user action immediately; no unsaved in-memory workout state.
-- TypeScript strict; no `any` outside the worker's sqlite handle.
+- UI → `src/repositories/` → `src/api/client.ts` → Hono routes in `server/routes/` → Postgres.
+  SQL only in `server/` (migrations in `server/migrations/`, never edit an applied one).
+- Every row is owned by a user; every query filters by the session's user.
+- `src/domain/` is pure TypeScript: no React, no DB/API imports. Every function there has tests.
+- Active workout is local-first: edits apply to a cached document, mirrored to `localStorage`,
+  saved whole with debounce + retry (`repositories/workoutStore.ts`). Persist every action.
+- TypeScript strict; no `any`.
 
-## Non-negotiable gotchas (details in SPEC §7)
+## Gotchas
 - Local dates via `domain/dates.ts` only — never `toISOString()` for calendar dates.
 - ISO weekdays (1 = Mon … 7 = Sun); convert from JS `getDay()` in one helper.
-- VFS is `opfs-sahpool` with pool name `ttp`, DB file `/ttp.sqlite3`; no COOP/COEP headers
-  needed. Never rename either after launch. Always pass `preserveOnInitFailure: true` —
-  otherwise a failed install deletes all data.
-- Vite: `base: '/'`, `optimizeDeps.exclude: ['@sqlite.org/sqlite-wasm']`,
-  `worker.format: 'es'`. PWA `globPatterns` must include `**/*.wasm`.
-- `HashRouter`, not `BrowserRouter` (GitHub Pages has no SPA fallback).
-
-## Planned v2 (not started)
-`MIGRATION.md` — self-hosted full-stack version (Node API + Postgres on the owner's laptop,
-Tailscale Funnel, invite-only accounts). Don't start it until asked.
-
-## Out of scope for v1
-Social features, accounts, sync, templates/routines, push notifications, localization,
-non-kg units. Don't build them; note ideas in `IDEAS.md` instead.
+- `HashRouter`. Writes must be JSON (CSRF guard); CSP is strict.
+- `src/db/` (old SQLite worker) is unused legacy; don't build on it.
 
 ## Style
-- UI language: English. Mobile-first, dark mode default, Tailwind.
+- UI language: English. Mobile-first, dark mode default, Tailwind. kg only.
 - Functional components + hooks. Feature folders under `src/features/`.
 - Prefer clarity over cleverness; explain non-obvious decisions in a short comment.
