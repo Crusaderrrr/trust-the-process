@@ -308,6 +308,12 @@ describe('workouts', () => {
     const q = `grip=wide&date=2026-09-10&startedAt=${encodeURIComponent('2026-09-10T17:00:00.000Z')}`;
     expect((await call('GET', `/api/exercises/${row}/previous?${q}`, bob)).json).toHaveLength(1);
     expect((await call('GET', `/api/exercises/${row}/previous?${q}`, ann)).json).toEqual([]); // not ann's history
+    // the offline copy: one entry per exercise and grip, newest finished workout, completed sets only
+    const last = (await call('GET', '/api/exercises/last-sets', bob)).json.filter((e: Json) => e.exerciseId === row);
+    expect(last.map((e: Json) => [e.grip, e.date, e.sets.map((s: Json) => s.reps)])).toEqual(
+      expect.arrayContaining([['wide', '2026-09-01', [10]], ['narrow', '2026-09-08', [8, 6]]]),
+    );
+    expect((await call('GET', '/api/exercises/last-sets', ann)).json.filter((e: Json) => e.exerciseId === row)).toEqual([]);
     // the grip used last time is offered when the exercise is added again
     expect((await call('GET', `/api/exercises/${row}`, bob)).json.lastGrip).toBe('narrow');
     await call('DELETE', `/api/workouts/${today.id}`, bob);

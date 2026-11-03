@@ -3,6 +3,7 @@ import * as authApi from '../../api/auth';
 import { isNetworkError } from '../../api/client';
 import { btn, input } from '../../components/ui';
 import { forgetExercises } from '../../repositories/exerciseCache';
+import { forgetLastSets } from '../../repositories/lastSets';
 
 const LAST_USER_KEY = 'ttp.lastUser';
 
@@ -64,6 +65,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     await authApi.logout();
     remember(null);
     forgetExercises();
+    forgetLastSets();
     // The SQLite worker, caches and route state all belong to the previous account.
     location.reload();
   }, []);

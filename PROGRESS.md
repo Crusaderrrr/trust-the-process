@@ -151,7 +151,9 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Calendar: tapping a day with exactly one workout opens it; the options sheet stays for empty days and days with several
 - [x] Weekly plan removed: days are only done / skipped / no workout (no planned / missed / extra). Plan screen, `/api/plan`, missed-days banner gone; migration 008 drops `plan_version` / `plan_day`
 - [x] Offline exercises: the library is cached in `localStorage` after every load and read from there when the server is unreachable; exercises created offline are queued with a negative temporary id, uploaded when the connection returns, and open workouts are re-pointed to the real id. A workout with a not-yet-uploaded exercise waits (retry with backoff) instead of being sent. Tests: `workoutDoc.test.ts` (id remap)
-- [ ] Not verified: server tests (Docker wasn't running, so migration 008 and the trimmed `data.test.ts` haven't run) and the offline flow in a browser. Offline, "Previous" is empty and editing an exercise (favourite, grip, rest, photo) still needs a connection
+- [x] "Offline — changes will sync" moved off the top edge (notch / camera cutout): a pill above the tab bar, and inside the workout header below the safe area (`components/SyncBadge.tsx`)
+- [x] Offline "Previous" column: `GET /api/exercises/last-sets` (latest completed sets per exercise + grip) is cached in `localStorage` on app start and when the connection returns; a finished workout is folded in locally, so the next offline workout sees it. Lookup mirrors the server rule (`domain/lastSets.ts`, unit tested)
+- [ ] Not verified: server tests (Docker wasn't running, so migration 008 and the trimmed `data.test.ts` haven't run) and the offline flow in a browser. The last-sets SQL and its test in `data.test.ts` haven't run either. Editing an exercise (favourite, grip, rest, photo) still needs a connection
 
 ## Not verified yet
 - iPhone check of Phases 1–6 (owner).

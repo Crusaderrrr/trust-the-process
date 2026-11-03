@@ -6,6 +6,7 @@ import type { CompletedValues, SetType, SetValues } from '../domain/sets';
 import * as doc from '../domain/workoutDoc';
 import type { Workout, WorkoutDetail } from '../domain/workoutDoc';
 import { listExercises } from './exercises';
+import { previousFromDevice, rememberFinished } from './lastSets';
 import { create, loadActive, loadWorkout, mutate, remove, settled } from './workoutStore';
 
 export { AUTO_REPS, AUTO_WEIGHT } from '../domain/workoutDoc';
@@ -50,7 +51,7 @@ async function previousFor(w: WorkoutDetail, exerciseId: number, grip: Grip | nu
   try {
     return await api<SetValues[]>('GET', `/exercises/${exerciseId}/previous?${q}`);
   } catch (e) {
-    if (isNetworkError(e)) return []; // offline: log without the "Previous" column
+    if (isNetworkError(e)) return previousFromDevice(w, exerciseId, grip); // offline: the copy kept on the device
     throw e;
   }
 }
@@ -127,11 +128,15 @@ export const uncompleteSet = (workoutId: string, setId: string) =>
  * Finalizes a workout: completes the given sets, drops every other incomplete set and any
  * exercise left without sets, then applies the workout fields (e.g. finishedAt, title).
  */
-export const finalizeWorkout = (
+export async function finalizeWorkout(
   workoutId: string,
   complete: (CompletedValues & { id: string })[],
   fields: Parameters<typeof doc.finalizeWorkout>[2],
-) => mutate(workoutId, (w) => doc.finalizeWorkout(w, complete, fields));
+) {
+  await mutate(workoutId, (w) => doc.finalizeWorkout(w, complete, fields));
+  const w = await loadWorkout(workoutId);
+  if (w) rememberFinished(w); // so the next workout offline already shows these sets as "Previous"
+}
 
 // ---- lists (always from the server) ----
 

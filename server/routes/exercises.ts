@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Sql } from '../db.js';
-import { previousSets } from '../previous.js';
+import { lastSets, previousSets } from '../previous.js';
 import { DATE_RE, EQUIPMENT, GRIP_SETS, GRIPS, isUniqueViolation, MUSCLE_GROUPS, parseBody, privateRouter, userId } from './util.js';
 
 type ExerciseRow = {
@@ -77,6 +77,9 @@ export function exerciseRoutes(sql: Sql) {
       ORDER BY lower(name)`;
     return c.json(rows.map(exerciseJson));
   });
+
+  /** Latest sets per exercise and grip, so the phone can show "Previous" offline. */
+  app.get('/last-sets', async (c) => c.json(await lastSets(sql, userId(c))));
 
   app.post('/', async (c) => {
     const { data, error } = await parseBody(c, createBody);

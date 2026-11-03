@@ -49,3 +49,45 @@ export async function previousSets(
     setType: r.set_type,
   }));
 }
+
+export type LastSetsJson = {
+  exerciseId: number;
+  grip: string | null;
+  date: string;
+  startedAt: string;
+  sets: SetValuesJson[];
+};
+
+/**
+ * For the phone's offline copy of the "Previous" column: the completed sets of the latest finished
+ * workout for every exercise and grip the account has logged.
+ */
+export async function lastSets(sql: Sql, userId: number): Promise<LastSetsJson[]> {
+  const rows = await sql<(Row & { id: string; exercise_id: string; grip: string | null; date: string; started_at: Date })[]>`
+    WITH latest AS (
+      SELECT DISTINCT ON (we.exercise_id, we.grip) we.id, we.exercise_id, we.grip, w.date, w.started_at
+      FROM workout_exercise we JOIN workout w ON w.id = we.workout_id
+      WHERE w.user_id = ${userId} AND w.finished_at IS NOT NULL
+        AND EXISTS (SELECT 1 FROM workout_set s WHERE s.workout_exercise_id = we.id AND s.completed)
+      ORDER BY we.exercise_id, we.grip, w.date DESC, w.started_at DESC, we.position
+    )
+    SELECT l.id, l.exercise_id, l.grip, l.date, l.started_at, s.weight_kg, s.reps, s.speed_kmh, s.incline_pct, s.set_type
+    FROM latest l JOIN workout_set s ON s.workout_exercise_id = l.id AND s.completed
+    ORDER BY l.id, s.position, s.id`;
+  const byEntry = new Map<string, LastSetsJson>();
+  for (const r of rows) {
+    let entry = byEntry.get(r.id);
+    if (!entry) {
+      entry = { exerciseId: Number(r.exercise_id), grip: r.grip, date: r.date, startedAt: r.started_at.toISOString(), sets: [] };
+      byEntry.set(r.id, entry);
+    }
+    entry.sets.push({
+      weightKg: r.weight_kg,
+      reps: r.reps,
+      speedKmh: r.speed_kmh,
+      inclinePct: r.incline_pct,
+      setType: r.set_type,
+    });
+  }
+  return [...byEntry.values()];
+}
