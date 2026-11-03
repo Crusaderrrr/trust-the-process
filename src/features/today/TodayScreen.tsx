@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import Icon from '../../components/Icon';
 import { btn, card, PageHeader, SectionTitle, Stat } from '../../components/ui';
@@ -9,28 +8,20 @@ import { useDbQuery } from '../../hooks/useDbQuery';
 import { SKIP_REASON_NAMES } from '../../repositories/skips';
 import { getActiveWorkout, listHistory, startWorkout } from '../../repositories/workouts';
 import { STATUS_NAME, STATUS_STYLE } from '../calendar/CalendarScreen';
-import SkipSheet from '../calendar/SkipSheet';
-import { useDays, type DayInfo } from '../calendar/useDays';
+import { useDays } from '../calendar/useDays';
 import { formatDate } from '../history/HistoryScreen';
-
-// ponytail: missed days older than this aren't nagged about; they still show on the Calendar.
-const MISSED_LOOKBACK_DAYS = 14;
 
 export default function TodayScreen() {
   const navigate = useNavigate();
   const t = today();
   const weekStart = addDays(t, 1 - isoWeekday(t));
-  const days = useDays(addDays(t, -MISSED_LOOKBACK_DAYS), addDays(weekStart, 6));
+  const days = useDays(weekStart, addDays(weekStart, 6));
   const active = useDbQuery(getActiveWorkout, []);
   const last = useDbQuery(async () => (await listHistory())[0] ?? null, []);
-  const [showMissed, setShowMissed] = useState(false);
-  const [skipDay, setSkipDay] = useState<DayInfo | null>(null);
 
   const todayInfo = days?.find((d) => d.date === t);
-  const week = days?.filter((d) => d.date >= weekStart) ?? [];
-  const missed = days?.filter((d) => d.status === 'missed') ?? [];
-  const weekPlanned = week.filter((d) => d.planned).length;
-  const weekDone = week.filter((d) => d.status === 'done' || d.status === 'extra').length;
+  const week = days ?? [];
+  const weekDone = week.filter((d) => d.status === 'done').length;
 
   const start = async () => {
     if (todayInfo?.skip && !confirm('Today is marked as skipped. Start a workout and remove the skip?')) return;
@@ -52,17 +43,13 @@ export default function TodayScreen() {
               <Icon name={todayInfo.status === 'skipped' ? 'skipDay' : todayInfo.workouts.length ? 'check' : 'dumbbell'} />
             </span>
             <div className="min-w-0">
-              <p className="text-lg font-semibold">
-                {todayInfo.status === 'planned' ? 'Training day' : STATUS_NAME[todayInfo.status]}
-              </p>
+              <p className="text-lg font-semibold">{STATUS_NAME[todayInfo.status]}</p>
               <p className="text-sm text-neutral-400">
                 {todayInfo.skip
                   ? SKIP_REASON_NAMES[todayInfo.skip.reason]
                   : todayInfo.workouts.length
                     ? todayInfo.workouts.map((w) => w.title).join(', ')
-                    : todayInfo.planned
-                      ? 'Trust the process.'
-                      : 'No workout planned today'}
+                    : 'Trust the process.'}
               </p>
             </div>
           </div>
@@ -80,43 +67,10 @@ export default function TodayScreen() {
         )}
       </section>
 
-      {missed.length > 0 && (
-        <section className="rounded-2xl bg-red-500/10 ring-1 ring-red-500/30">
-          <button
-            className="flex w-full items-center gap-3 p-4 text-left font-medium text-red-300"
-            onClick={() => setShowMissed(!showMissed)}
-          >
-            <Icon name="warning" />
-            <span className="flex-1">
-              {missed.length} missed day{missed.length > 1 ? 's' : ''} — add a reason
-            </span>
-            <Icon name={showMissed ? 'chevronUp' : 'chevronDown'} />
-          </button>
-          {showMissed && (
-            <ul className="divide-y divide-red-500/20 border-t border-red-500/20 px-4">
-              {missed.map((d) => (
-                <li key={d.date}>
-                  <button className="flex w-full items-center justify-between py-3 text-left" onClick={() => setSkipDay(d)}>
-                    <span>{formatDate(d.date)}</span>
-                    <span className="flex items-center text-sm text-red-300">
-                      Add reason <Icon name="chevronRight" className="h-4 w-4" />
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
-
       <section className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between">
           <SectionTitle>This week</SectionTitle>
-          {weekPlanned > 0 && (
-            <span className="text-xs text-neutral-500">
-              {weekDone} / {weekPlanned} planned done
-            </span>
-          )}
+          {weekDone > 0 && <span className="text-xs text-neutral-500">{weekDone} done</span>}
         </div>
         <Link to="/calendar" className={`${card} grid grid-cols-7 gap-1 p-3`}>
           {week.map((d) => (
@@ -152,8 +106,6 @@ export default function TodayScreen() {
           </Link>
         </section>
       )}
-
-      {skipDay && <SkipSheet date={skipDay.date} skip={skipDay.skip} onClose={() => setSkipDay(null)} />}
     </div>
   );
 }

@@ -4,44 +4,6 @@ import { DATE_RE, parseBody, privateRouter, RATINGS, SKIP_REASONS, userId } from
 
 const dateParam = z.string().regex(DATE_RE);
 
-/** Weekly training plan, versioned by the date it takes effect. */
-export function planRoutes(sql: Sql) {
-  const app = privateRouter(sql);
-
-  app.get('/', async (c) => {
-    const rows = await sql<{ effective_from: string; days: number[] | null }[]>`
-      SELECT v.effective_from, array_agg(d.weekday ORDER BY d.weekday) FILTER (WHERE d.weekday IS NOT NULL) AS days
-      FROM plan_version v LEFT JOIN plan_day d ON d.plan_version_id = v.id
-      WHERE v.user_id = ${userId(c)}
-      GROUP BY v.id ORDER BY v.effective_from`;
-    return c.json(rows.map((r) => ({ effectiveFrom: r.effective_from, weekdays: r.days ?? [] })));
-  });
-
-  /** New plan version effective from `date`, replacing one that already starts that day. */
-  app.put('/', async (c) => {
-    const { data, error } = await parseBody(
-      c,
-      z.object({ date: dateParam, weekdays: z.array(z.number().int().min(1).max(7)).max(7) }),
-    );
-    if (error) return error;
-    const uid = userId(c);
-    const weekdays = [...new Set(data.weekdays)];
-    await sql.begin(async (tx) => {
-      const rows = await tx<{ id: string }[]>`
-        INSERT INTO plan_version (user_id, effective_from) VALUES (${uid}, ${data.date})
-        ON CONFLICT (user_id, effective_from) DO UPDATE SET effective_from = excluded.effective_from RETURNING id`;
-      const id = rows[0]!.id;
-      await tx`DELETE FROM plan_day WHERE plan_version_id = ${id}`;
-      if (weekdays.length) {
-        await tx`INSERT INTO plan_day ${tx(weekdays.map((weekday) => ({ plan_version_id: id, weekday })))}`;
-      }
-    });
-    return c.json({ ok: true });
-  });
-
-  return app;
-}
-
 /** Days marked as skipped, with a reason. */
 export function skipRoutes(sql: Sql) {
   const app = privateRouter(sql);

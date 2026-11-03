@@ -10,7 +10,7 @@ import { exerciseRoutes } from './routes/exercises.js';
 import { inviteRoutes } from './routes/invites.js';
 import { pushRoutes } from './routes/push.js';
 import { createPush, type Push } from './push.js';
-import { planRoutes, settingsRoutes, skipRoutes } from './routes/planning.js';
+import { settingsRoutes, skipRoutes } from './routes/planning.js';
 import { historyRoutes, progressRoutes, workoutRoutes } from './routes/workouts.js';
 
 export function createApp(sql: Sql, staticDir: string, push: Push = createPush(sql)): Hono<AuthEnv> {
@@ -59,7 +59,6 @@ export function createApp(sql: Sql, staticDir: string, push: Push = createPush(s
   app.route('/api/invites', inviteRoutes(sql));
   app.route('/api/exercises', exerciseRoutes(sql));
   app.route('/api/settings', settingsRoutes(sql));
-  app.route('/api/plan', planRoutes(sql));
   app.route('/api/skips', skipRoutes(sql));
   app.route('/api/workouts', workoutRoutes(sql, push));
   app.route('/api/push', pushRoutes(sql, push));

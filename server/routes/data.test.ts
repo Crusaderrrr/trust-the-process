@@ -86,7 +86,6 @@ describe('authentication', () => {
     ['GET', '/api/exercises'],
     ['GET', '/api/workouts/active'],
     ['GET', '/api/history'],
-    ['GET', '/api/plan'],
     ['GET', '/api/settings'],
     ['GET', '/api/progress/sessions'],
   ])('%s %s requires login', async (method, path) => {
@@ -169,22 +168,7 @@ describe('exercise library', () => {
   });
 });
 
-describe('plan and skips', () => {
-  it('versions the plan by effective date and replaces a version that starts the same day', async () => {
-    expect((await call('GET', '/api/plan', bob)).json).toEqual([]);
-    await call('PUT', '/api/plan', bob, { date: '2026-10-01', weekdays: [1, 3, 5] });
-    await call('PUT', '/api/plan', bob, { date: '2026-10-15', weekdays: [2, 4] });
-    await call('PUT', '/api/plan', bob, { date: '2026-10-15', weekdays: [6, 2, 2] });
-    expect((await call('GET', '/api/plan', bob)).json).toEqual([
-      { effectiveFrom: '2026-10-01', weekdays: [1, 3, 5] },
-      { effectiveFrom: '2026-10-15', weekdays: [2, 6] },
-    ]);
-    expect((await call('GET', '/api/plan', ann)).json).toEqual([]);
-    expect((await call('PUT', '/api/plan', bob, { date: '2026-10-15', weekdays: [8] })).status).toBe(400);
-    await call('PUT', '/api/plan', bob, { date: '2026-11-01', weekdays: [] });
-    expect((await call('GET', '/api/plan', bob)).json.at(-1)).toEqual({ effectiveFrom: '2026-11-01', weekdays: [] });
-  });
-
+describe('skips', () => {
   it('saves, lists, updates and removes skips per account', async () => {
     await call('PUT', '/api/skips/2026-10-03', ann, { reason: 'sick', note: null });
     await call('PUT', '/api/skips/2026-10-03', ann, { reason: 'travel', note: 'Rome' });

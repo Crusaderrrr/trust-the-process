@@ -14,33 +14,26 @@ import { useDays, type DayInfo } from './useDays';
 
 export const STATUS_STYLE: Record<DayStatus, string> = {
   done: 'bg-green-500 text-neutral-950',
-  extra: 'bg-green-500/60 text-neutral-950',
   skipped: 'bg-amber-500/20 text-amber-300',
-  missed: 'bg-red-500/20 text-red-300',
-  planned: 'ring-2 ring-inset ring-green-500/70 text-neutral-100',
   rest: 'bg-neutral-800/50 text-neutral-400',
 };
 
 export const STATUS_NAME: Record<DayStatus, string> = {
   done: 'Done',
-  extra: 'Done (extra)',
   skipped: 'Skipped',
-  missed: 'Missed',
-  planned: 'Planned',
-  rest: 'Rest day',
+  rest: 'No workout',
 };
 
-const LEGEND: DayStatus[] = ['done', 'extra', 'planned', 'skipped', 'missed'];
+const LEGEND: DayStatus[] = ['done', 'skipped'];
 
-/** Done and skipped days get a soft tint and a corner badge; the other statuses keep their fill. */
-const isMarked = (s: DayStatus) => s === 'done' || s === 'extra' || s === 'skipped';
+/** Done and skipped days get a soft tint and a corner badge. */
+const isMarked = (s: DayStatus) => s !== 'rest';
 const MARKED_CELL: Partial<Record<DayStatus, string>> = {
   done: 'bg-green-500/10 ring-1 ring-inset ring-green-500/30',
-  extra: 'bg-green-500/10 ring-1 ring-inset ring-green-500/30',
   skipped: 'bg-amber-500/10 ring-1 ring-inset ring-amber-500/30',
 };
 
-/** Tick (done), outlined tick (done, unplanned) or dash (skipped) in a small circle; dots for the rest. */
+/** Tick (done) or dash (skipped) in a small circle; a dot for days with nothing. */
 function StatusMark({ status, size = 'h-4 w-4' }: { status: DayStatus; size?: string }) {
   if (status === 'skipped') {
     return (
@@ -49,13 +42,9 @@ function StatusMark({ status, size = 'h-4 w-4' }: { status: DayStatus; size?: st
       </span>
     );
   }
-  if (status === 'done' || status === 'extra') {
+  if (status === 'done') {
     return (
-      <span
-        className={`flex ${size} shrink-0 items-center justify-center rounded-full ${
-          status === 'done' ? 'bg-green-500 text-neutral-950' : 'text-green-500 ring-[1.5px] ring-inset ring-green-500'
-        }`}
-      >
+      <span className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-green-500 text-neutral-950`}>
         <Icon name="check" className="h-full w-full p-px" />
       </span>
     );
@@ -68,6 +57,7 @@ export default function CalendarScreen() {
   const [month, setMonth] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [open, setOpen] = useState<string | null>(null);
   const touchX = useRef<number | null>(null);
+  const navigate = useNavigate();
 
   const cells = monthGrid(month.y, month.m);
   const first = toLocalDate(new Date(month.y, month.m, 1));
@@ -93,15 +83,7 @@ export default function CalendarScreen() {
         touchX.current = null;
       }}
     >
-      <PageHeader
-        title="Calendar"
-        action={
-          <Link to="/plan" className={`${btn.secondary} py-2 text-sm`}>
-            <Icon name="plan" className="h-[18px] w-[18px]" />
-            Weekly plan
-          </Link>
-        }
-      />
+      <PageHeader title="Calendar" />
 
       <section className={`${card} p-3`}>
         <div className="mb-3 flex items-center justify-between">
@@ -129,7 +111,8 @@ export default function CalendarScreen() {
                 className={`relative aspect-square rounded-xl text-sm font-medium ${
                   d ? (isMarked(d.status) ? MARKED_CELL[d.status] : STATUS_STYLE[d.status]) : ''
                 } ${date === t ? 'font-bold outline-2 outline-offset-1 outline-white' : ''}`}
-                onClick={() => setOpen(date)}
+                // One logged workout: open it directly. Several: the sheet lets you pick.
+                onClick={() => (d?.workouts.length === 1 ? navigate(`/history/${d.workouts[0]!.id}`) : setOpen(date))}
               >
                 {d?.mood && (
                   <span
@@ -162,11 +145,9 @@ export default function CalendarScreen() {
       <section className="flex flex-col gap-2">
         <SectionTitle>This month</SectionTitle>
         <div className={`${card} p-4`}>
-          <div className="grid grid-cols-4 gap-2 text-center">
-            <Count label="Planned" value={days?.filter((d) => d.planned).length ?? 0} />
-            <Count label="Done" value={count('done', 'extra')} accent="text-green-500" />
+          <div className="grid grid-cols-2 gap-2 text-center">
+            <Count label="Done" value={count('done')} accent="text-green-500" />
             <Count label="Skipped" value={count('skipped')} accent="text-amber-300" />
-            <Count label="Missed" value={count('missed')} accent="text-red-300" />
           </div>
           {reasons.size > 0 && (
             <ul className="mt-4 flex flex-col gap-1.5 border-t border-white/[0.06] pt-3 text-sm text-neutral-300">

@@ -1,34 +1,10 @@
 import { addDays, isoWeekday, toLocalDate } from './dates';
 
-export type DayStatus = 'done' | 'extra' | 'skipped' | 'missed' | 'planned' | 'rest';
-/** Sorted by effectiveFrom ascending. */
-export type PlanVersion = { effectiveFrom: string; weekdays: number[] };
+export type DayStatus = 'done' | 'skipped' | 'rest';
 
-/** Weekdays planned on a date: the latest version effective on or before it (SPEC §4). */
-export function plannedWeekdays(versions: PlanVersion[], date: string): number[] {
-  let days: number[] = [];
-  for (const v of versions) {
-    if (v.effectiveFrom > date) break;
-    days = v.weekdays;
-  }
-  return days;
-}
-
-export function isPlanned(versions: PlanVersion[], date: string): boolean {
-  return plannedWeekdays(versions, date).includes(isoWeekday(date));
-}
-
-export function dayStatus(d: {
-  date: string;
-  today: string;
-  planned: boolean;
-  done: boolean;
-  skipped: boolean;
-}): DayStatus {
-  if (d.done) return d.planned ? 'done' : 'extra';
-  if (d.skipped) return 'skipped';
-  if (d.planned) return d.date < d.today ? 'missed' : 'planned';
-  return 'rest';
+export function dayStatus(d: { done: boolean; skipped: boolean }): DayStatus {
+  if (d.done) return 'done';
+  return d.skipped ? 'skipped' : 'rest';
 }
 
 /** Inclusive list of dates from → to. */

@@ -9,7 +9,6 @@ import TodayScreen from './features/today/TodayScreen';
 import HistoryScreen from './features/history/HistoryScreen';
 import { EditWorkoutScreen, WorkoutDetailScreen } from './features/history/WorkoutDetailScreen';
 import CalendarScreen from './features/calendar/CalendarScreen';
-import PlanScreen from './features/calendar/PlanScreen';
 import ExercisesScreen from './features/exercises/ExercisesScreen';
 import ExerciseProgressScreen from './features/progress/ExerciseProgressScreen';
 import SettingsScreen from './features/settings/SettingsScreen';
@@ -32,7 +31,6 @@ export default function App() {
           <Route path="/history/:id" element={<WorkoutDetailScreen />} />
           <Route path="/history/:id/edit" element={<EditWorkoutScreen />} />
           <Route path="/calendar" element={<CalendarScreen />} />
-          <Route path="/plan" element={<PlanScreen />} />
           <Route path="/exercises" element={<ExercisesScreen />} />
           <Route path="/exercises/:id" element={<ExerciseProgressScreen />} />
           <Route path="/settings" element={<SettingsScreen />} />
