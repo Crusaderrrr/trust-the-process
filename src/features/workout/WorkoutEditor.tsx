@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import CheckIn from '../../components/CheckIn';
 import Icon from '../../components/Icon';
 import SyncBadge from '../../components/SyncBadge';
 import { btn, card, input, Stat } from '../../components/ui';
@@ -176,6 +177,10 @@ const timeOf = (iso: string) => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
+// Native date/time inputs size and align differently per browser: force one height, left text, no shrink.
+const fieldLabel = 'flex min-w-0 flex-col gap-1 text-xs text-neutral-400';
+const fieldInput = 'h-12 min-w-0 appearance-none px-2 text-left';
+
 /** Title, date, start time, duration and notes of a finished workout. */
 function EditFields({ workout }: { workout: WorkoutDetail }) {
   const durationMin = Math.round((Date.parse(workout.finishedAt!) - Date.parse(workout.startedAt)) / 60000);
@@ -200,29 +205,29 @@ function EditFields({ workout }: { workout: WorkoutDetail }) {
         placeholder="Title"
         onChange={(e) => e.target.value.trim() && updateWorkout(workout.id, { title: e.target.value.trim() })}
       />
-      <div className="grid grid-cols-3 gap-2">
-        <label className="text-xs text-neutral-400">
+      <div className="grid grid-cols-[1.5fr_1fr_0.8fr] gap-2">
+        <label className={fieldLabel}>
           Date
           <input
             type="date"
-            className={`${input} mt-1 px-2`}
+            className={`${input} ${fieldInput}`}
             value={workout.date}
             onChange={(e) => e.target.value && setStart(e.target.value, timeOf(workout.startedAt))}
           />
         </label>
-        <label className="text-xs text-neutral-400">
+        <label className={fieldLabel}>
           Start
           <input
             type="time"
-            className={`${input} mt-1 px-2`}
+            className={`${input} ${fieldInput}`}
             value={timeOf(workout.startedAt)}
             onChange={(e) => e.target.value && setStart(workout.date, e.target.value)}
           />
         </label>
-        <label className="text-xs text-neutral-400">
+        <label className={fieldLabel}>
           Minutes
           <input
-            className={`${input} mt-1 px-2`}
+            className={`${input} ${fieldInput}`}
             inputMode="numeric"
             defaultValue={durationMin}
             onChange={(e) => {
@@ -232,6 +237,11 @@ function EditFields({ workout }: { workout: WorkoutDetail }) {
           />
         </label>
       </div>
+      <CheckIn
+        rating={workout.rating}
+        feelings={workout.feelings}
+        onChange={(v) => void updateWorkout(workout.id, v)}
+      />
       <textarea
         className={input}
         rows={2}

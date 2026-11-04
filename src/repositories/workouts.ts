@@ -37,7 +37,7 @@ export const deleteWorkout = (id: string) => remove(id);
 
 export const updateWorkout = (
   id: string,
-  fields: Partial<Pick<Workout, 'title' | 'notes' | 'date' | 'startedAt' | 'finishedAt' | 'restEndsAt'>>,
+  fields: Partial<Pick<Workout, 'title' | 'notes' | 'date' | 'startedAt' | 'finishedAt' | 'restEndsAt' | 'rating' | 'feelings'>>,
 ) => mutate(id, (w) => doc.updateFields(w, fields));
 
 // ---- exercises in a workout ----

@@ -99,7 +99,7 @@ export function newPastWorkout(id: string, date: string, start: Date): WorkoutDe
 
 export const updateFields = (
   w: WorkoutDetail,
-  fields: Partial<Pick<Workout, 'title' | 'notes' | 'date' | 'startedAt' | 'finishedAt' | 'restEndsAt'>>,
+  fields: Partial<Pick<Workout, 'title' | 'notes' | 'date' | 'startedAt' | 'finishedAt' | 'restEndsAt' | 'rating' | 'feelings'>>,
 ): WorkoutDetail => ({ ...w, ...fields });
 
 // ---- exercises ----

@@ -2,6 +2,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router';
 import ExerciseThumb from '../../components/ExerciseThumb';
 import Icon from '../../components/Icon';
 import { BackButton, btn, card, Stat } from '../../components/ui';
+import { FEELING_NAMES, RATING_COLOR, RATING_NAMES } from '../../domain/checkIn';
 import { formatSet, formatWeight, setLabels } from '../../domain/sets';
 import { formatDuration, summarize } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
@@ -37,6 +38,19 @@ export function WorkoutDetailScreen() {
         <Stat icon="weight" label="Volume" value={`${formatWeight(summary.volume)} kg`} />
         <Stat icon="sets" label="Sets" value={String(summary.sets)} />
       </div>
+      {w.rating && (
+        <div className="flex flex-wrap items-center gap-2 px-1">
+          <span className="flex items-center gap-2 rounded-full bg-neutral-800 px-3 py-1.5 text-sm font-medium">
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: RATING_COLOR[w.rating] }} />
+            {RATING_NAMES[w.rating]}
+          </span>
+          {w.feelings.map((f) => (
+            <span key={f} className="rounded-full bg-neutral-800 px-3 py-1.5 text-sm text-neutral-300">
+              {FEELING_NAMES[f]}
+            </span>
+          ))}
+        </div>
+      )}
       {w.notes && <p className="px-1 whitespace-pre-wrap text-neutral-300">{w.notes}</p>}
 
       {w.exercises.map((we) => {
