@@ -44,6 +44,7 @@ const workoutSchema = z.object({
   // Defaults let a copy saved locally before the check-in existed still sync.
   rating: z.enum(RATINGS).nullable().default(null),
   feelings: z.array(z.enum(FEELINGS)).max(FEELINGS.length).default([]),
+  templateId: z.string().max(50).nullable().default(null),
   exercises: z.array(exerciseSchema).max(100),
 });
 type WorkoutBody = z.infer<typeof workoutSchema>;
@@ -58,11 +59,12 @@ type WorkoutRow = {
   rest_ends_at: Date | null;
   rating: string | null;
   feelings: string[];
+  template_id: string | null;
 };
 
 async function loadWorkout(sql: Sql, uid: number, id: string) {
   const [w] = await sql<WorkoutRow[]>`
-    SELECT id, title, date, started_at, finished_at, notes, rest_ends_at, rating, feelings
+    SELECT id, title, date, started_at, finished_at, notes, rest_ends_at, rating, feelings, template_id
     FROM workout WHERE id = ${id} AND user_id = ${uid}`;
   if (!w) return null;
 
@@ -124,6 +126,7 @@ async function loadWorkout(sql: Sql, uid: number, id: string) {
     restEndsAt: iso(w.rest_ends_at),
     rating: w.rating,
     feelings: w.feelings,
+    templateId: w.template_id,
     exercises: await Promise.all(
       exercises.map(async (e) => ({
         id: e.id,
@@ -170,12 +173,12 @@ async function saveWorkout(sql: Sql, uid: number, w: WorkoutBody): Promise<'ok' 
     }
 
     await tx`
-      INSERT INTO workout (id, user_id, title, date, started_at, finished_at, notes, rest_ends_at, rating, feelings)
+      INSERT INTO workout (id, user_id, title, date, started_at, finished_at, notes, rest_ends_at, rating, feelings, template_id)
       VALUES (${w.id}, ${uid}, ${w.title}, ${w.date}, ${w.startedAt}, ${w.finishedAt}, ${w.notes}, ${w.restEndsAt},
-              ${w.rating}, ${tx.array(w.feelings, 1009 /* text[] */)})
+              ${w.rating}, ${tx.array(w.feelings, 1009 /* text[] */)}, ${w.templateId})
       ON CONFLICT (id) DO UPDATE SET title = excluded.title, date = excluded.date, started_at = excluded.started_at,
         finished_at = excluded.finished_at, notes = excluded.notes, rest_ends_at = excluded.rest_ends_at,
-        rating = excluded.rating, feelings = excluded.feelings`;
+        rating = excluded.rating, feelings = excluded.feelings, template_id = excluded.template_id`;
     // Starting or logging a workout on a day marked as skipped lifts the skip.
     if (!existing[0]) await tx`DELETE FROM skip WHERE user_id = ${uid} AND date = ${w.date}`;
 
@@ -290,7 +293,7 @@ export function historyRoutes(sql: Sql) {
   app.get('/', async (c) => {
     const uid = userId(c);
     const workouts = await sql<WorkoutRow[]>`
-      SELECT id, title, date, started_at, finished_at, notes, rest_ends_at, rating, feelings FROM workout
+      SELECT id, title, date, started_at, finished_at, notes, rest_ends_at, rating, feelings, template_id FROM workout
       WHERE user_id = ${uid} AND finished_at IS NOT NULL ORDER BY date DESC, started_at DESC`;
     const rows = await sql<{ workout_id: string; name: string; grip: string | null; sets: string; volume: number }[]>`
       SELECT we.workout_id, e.name, we.grip, COUNT(s.id) AS sets,
@@ -313,6 +316,7 @@ export function historyRoutes(sql: Sql) {
           restEndsAt: iso(w.rest_ends_at),
           rating: w.rating,
           feelings: w.feelings,
+          templateId: w.template_id,
           exercises: mine.map((r) => ({ name: r.name, sets: Number(r.sets), grip: r.grip })),
           volume: mine.reduce((a, r) => a + r.volume, 0),
         };

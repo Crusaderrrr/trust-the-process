@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layoutSlots, TEMPLATES } from './templates';
+import { layoutSlots, NO_TEMPLATE_COLOR, PALETTE, templateColor, TEMPLATES } from './templates';
 
 const [upper] = TEMPLATES;
 const ex = (id: string) => ({ id });
@@ -14,5 +14,12 @@ describe('templates', () => {
     const { rows, extras } = layoutSlots(upper!, { chest2: 'b', back1: 'gone' }, [ex('a'), ex('b')]);
     expect(rows.map((r) => r.we?.id ?? null)).toEqual([null, null, 'b', null, null, null]);
     expect(extras.map((e) => e.id)).toEqual(['a']);
+  });
+
+  it('colours: user pick, then default per template, then the no-template colour', () => {
+    expect(templateColor('upper')).toBe(PALETTE[0]);
+    expect(templateColor('lower', { lower: '#ffffff' })).toBe('#ffffff');
+    expect(templateColor(null)).toBe(NO_TEMPLATE_COLOR);
+    expect(templateColor('custom-1')).toBe(NO_TEMPLATE_COLOR);
   });
 });

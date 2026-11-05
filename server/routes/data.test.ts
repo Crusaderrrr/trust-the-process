@@ -189,6 +189,21 @@ describe('skips', () => {
 });
 
 describe('workouts', () => {
+  it('keeps the template a workout was started from, and each account has its own template colours', async () => {
+    const bench = await exerciseId(ann, 'Barbell Bench Press');
+    const w = doc([{ exerciseId: bench, sets: [{ weightKg: 60, reps: 8, completed: false }] }], { templateId: 'upper', date: '2026-09-01' });
+    expect((await call('PUT', `/api/workouts/${w.id}`, ann, w)).status).toBe(200);
+    expect((await call('GET', `/api/workouts/${w.id}`, ann)).json.workout).toMatchObject({ templateId: 'upper', date: '2026-09-01' });
+    expect((await call('GET', '/api/history', ann)).json.find((h: { id: string }) => h.id === w.id)).toMatchObject({ templateId: 'upper', date: '2026-09-01' });
+
+    expect((await call('GET', '/api/settings/template-colors', ann)).json).toEqual({});
+    expect((await call('PUT', '/api/settings/template-colors/upper', ann, { color: '#a78bfa' })).status).toBe(200);
+    expect((await call('PUT', '/api/settings/template-colors/lower', ann, { color: '#f59e0b' })).status).toBe(200);
+    expect((await call('PUT', '/api/settings/template-colors/upper', ann, { color: 'red' })).status).toBe(400);
+    expect((await call('GET', '/api/settings/template-colors', ann)).json).toEqual({ upper: '#a78bfa', lower: '#f59e0b' });
+    expect((await call('GET', '/api/settings/template-colors', bob)).json).toEqual({});
+  });
+
   it('stores the optional check-in and returns the rating for the calendar', async () => {
     const bench = await exerciseId(ann, 'Barbell Bench Press');
     const w = doc([{ exerciseId: bench, sets: [{ weightKg: 60, reps: 8 }] }], { rating: 'bad', feelings: ['poor_sleep', 'stressed'] });

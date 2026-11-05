@@ -53,3 +53,14 @@ export function layoutSlots<E extends { id: string }>(
   const used = new Set(rows.flatMap((r) => (r.we ? [r.we.id] : [])));
   return { rows, extras: exercises.filter((e) => !used.has(e.id)) };
 }
+
+/** Colours a template can take; the first two are the defaults of Upper / Lower. */
+export const PALETTE = ['#38bdf8', '#f59e0b', '#a78bfa', '#f472b6', '#f87171', '#2dd4bf', '#a3e635', '#e5e5e5'] as const;
+/** Workouts that used no template. */
+export const NO_TEMPLATE_COLOR = '#22c55e';
+
+const DEFAULT_COLORS: Record<string, string> = { upper: PALETTE[0], lower: PALETTE[1] };
+
+/** The user's pick for a template, else its default. */
+export const templateColor = (id: string | null | undefined, picked: Record<string, string> = {}): string =>
+  (id && (picked[id] ?? DEFAULT_COLORS[id])) || NO_TEMPLATE_COLOR;

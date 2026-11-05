@@ -69,16 +69,27 @@ describe('tonnage', () => {
 
   it('sums per ISO week keyed by Monday, chronological, ignoring older workouts', () => {
     expect(tonnage(ws, 'week', '2026-09-01')).toEqual([
-      { date: '2026-10-19', volume: 400 },
-      { date: '2026-10-26', volume: 50 },
+      { date: '2026-10-19', volume: 400, templateId: null },
+      { date: '2026-10-26', volume: 50, templateId: null },
     ]);
   });
 
   it('lists each workout day on its own', () => {
     expect(tonnage(ws, 'workout', '2026-10-20')).toEqual([
-      { date: '2026-10-25', volume: 300 },
-      { date: '2026-10-26', volume: 50 },
+      { date: '2026-10-25', volume: 300, templateId: null },
+      { date: '2026-10-26', volume: 50, templateId: null },
     ]);
+  });
+
+  it('filters by template and tags workout bars with it (week bars carry none)', () => {
+    const t = [
+      { date: '2026-10-19', volume: 100, templateId: 'upper' },
+      { date: '2026-10-21', volume: 200, templateId: 'lower' },
+      { date: '2026-10-22', volume: 50 },
+    ];
+    expect(tonnage(t, 'workout', '2026-10-01', 'upper')).toEqual([{ date: '2026-10-19', volume: 100, templateId: 'upper' }]);
+    expect(tonnage(t, 'workout', '2026-10-01').map((b) => b.templateId)).toEqual(['upper', 'lower', null]);
+    expect(tonnage(t, 'week', '2026-10-01')).toEqual([{ date: '2026-10-19', volume: 350, templateId: null }]);
   });
 
   it('computes range starts', () => {

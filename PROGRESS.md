@@ -189,3 +189,7 @@ Live URL: https://crusaderrrr.github.io/
   "Start workout" / "From template". A template workout shows empty sections (Chest 1, Back 1, …); tapping
   one opens the picker limited to that muscle group. Sections left empty vanish on finish (nothing new in
   the saved doc; slot fills live in localStorage, `repositories/templateRun.ts`). "Create template" is a stub.
+- 2026-11-05 — Template colours + history: workouts store `template_id` (migration 009; workouts logged
+  before it stay "no template"); per-account colours in `user_settings.template_colors`. History chart in
+  Workout mode: bars take the template colour, filter chips All/Upper/Lower, colour swatches for the
+  selected template, template name in the tooltip. Week mode adds everything together.

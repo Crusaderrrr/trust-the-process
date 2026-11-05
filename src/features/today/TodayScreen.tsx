@@ -5,9 +5,10 @@ import Sheet from '../../components/Sheet';
 import { btn, card, PageHeader, SectionTitle, Stat } from '../../components/ui';
 import { addDays, isoWeekday, parseLocalDate, today } from '../../domain/dates';
 import { formatWeight } from '../../domain/sets';
-import { TEMPLATES, type Template } from '../../domain/templates';
+import { templateColor, TEMPLATES, type Template } from '../../domain/templates';
 import { formatDuration } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
+import { getTemplateColors } from '../../repositories/templates';
 import { startRun } from '../../repositories/templateRun';
 import { SKIP_REASON_NAMES } from '../../repositories/skips';
 import { getActiveWorkout, listHistory, startWorkout } from '../../repositories/workouts';
@@ -28,10 +29,11 @@ export default function TodayScreen() {
   const weekDone = week.filter((d) => d.status === 'done').length;
 
   const [picking, setPicking] = useState(false);
+  const colors = useDbQuery(getTemplateColors, []);
 
   const start = async (template?: Template) => {
     if (todayInfo?.skip && !confirm('Today is marked as skipped. Start a workout and remove the skip?')) return;
-    const id = await startWorkout(template?.name);
+    const id = await startWorkout(template);
     if (template) startRun(id, template.id);
     navigate('/workout');
   };
@@ -125,7 +127,10 @@ export default function TodayScreen() {
             {TEMPLATES.map((t) => (
               <li key={t.id}>
                 <button className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left" onClick={() => start(t)}>
-                  <span className="font-medium">{t.name}</span>
+                  <span className="flex items-center gap-2 font-medium">
+                    <span className="h-3 w-3 rounded-full" style={{ background: templateColor(t.id, colors) }} />
+                    {t.name}
+                  </span>
                   <span className="text-sm text-neutral-400">{t.slots.map((s) => s.name).join(' · ')}</span>
                 </button>
               </li>

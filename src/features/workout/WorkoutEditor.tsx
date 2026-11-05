@@ -6,9 +6,9 @@ import SyncBadge from '../../components/SyncBadge';
 import { btn, card, input, Stat } from '../../components/ui';
 import { parseLocalDate, toLocalDate } from '../../domain/dates';
 import { formatWeight } from '../../domain/sets';
-import { layoutSlots, TEMPLATES, type TemplateSlot } from '../../domain/templates';
+import { layoutSlots, templateColor, TEMPLATES, type TemplateSlot } from '../../domain/templates';
 import { formatClock, summarize } from '../../domain/workout';
-import { useNow } from '../../hooks/useDbQuery';
+import { useDbQuery, useNow } from '../../hooks/useDbQuery';
 import {
   addExercises,
   deleteWorkout,
@@ -17,6 +17,7 @@ import {
   updateWorkout,
   type WorkoutDetail,
 } from '../../repositories/workouts';
+import { getTemplateColors } from '../../repositories/templates';
 import { fillSlot, getRun } from '../../repositories/templateRun';
 import ExercisePicker from '../exercises/ExercisePicker';
 import ExerciseCard from './ExerciseCard';
@@ -38,6 +39,8 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
   const run = mode === 'active' ? getRun(workout.id) : null;
   const template = TEMPLATES.find((t) => t.id === run?.templateId);
   const layout = template && run ? layoutSlots(template, run.fills, workout.exercises) : null;
+
+  const colors = useDbQuery(getTemplateColors, []);
 
   const allSets = workout.exercises.flatMap((e) => e.sets);
   const summary = summarize(allSets);
@@ -81,7 +84,12 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
           ) : (
             <span className="w-10" />
           )}
-          <h1 className="text-[17px] font-semibold">{mode === 'active' ? 'Log Workout' : 'Edit Workout'}</h1>
+          <h1 className="flex items-center gap-2 text-[17px] font-semibold">
+            {workout.templateId && (
+              <span className="h-3 w-3 rounded-full" style={{ background: templateColor(workout.templateId, colors) }} />
+            )}
+            {mode === 'active' ? 'Log Workout' : 'Edit Workout'}
+          </h1>
           <button
             className="inline-flex items-center gap-1.5 rounded-full bg-green-500 px-4 py-2 font-semibold text-neutral-950 active:bg-green-600"
             onClick={mode === 'active' ? finish : done}

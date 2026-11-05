@@ -18,6 +18,8 @@ export type Workout = {
   /** Optional check-in after the workout. */
   rating: Rating | null;
   feelings: Feeling[];
+  /** Built-in template the workout was started from, if any. */
+  templateId: string | null;
 };
 
 export type WorkoutSet = {
@@ -81,6 +83,7 @@ export function newWorkout(id: string, now: Date, today: string): WorkoutDetail 
     restEndsAt: null,
     rating: null,
     feelings: [],
+    templateId: null,
     exercises: [],
   };
 }

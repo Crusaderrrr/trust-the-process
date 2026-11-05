@@ -81,17 +81,24 @@ export type Range = keyof typeof RANGES;
 
 export const rangeStart = (range: Range, today: string) => addDays(today, -RANGES[range]);
 
-/** Total tonnage per workout or per ISO week (keyed by its Monday), chronological, from `from` on. */
+/**
+ * Total tonnage per workout or per ISO week (keyed by its Monday), chronological, from `from` on.
+ * `templateId` keeps only workouts started from that template. A "workout" bar carries the template
+ * of its first workout of the day (two workouts on one day share a bar); week bars have none.
+ */
 export function tonnage(
-  workouts: { date: string; volume: number }[],
+  workouts: { date: string; volume: number; templateId?: string | null }[],
   by: 'workout' | 'week',
   from: string,
-): { date: string; volume: number }[] {
-  const out = new Map<string, number>();
+  templateId: string | null = null,
+): { date: string; volume: number; templateId: string | null }[] {
+  const out = new Map<string, { volume: number; templateId: string | null }>();
   for (const w of workouts) {
-    if (w.date < from) continue;
+    if (w.date < from || (templateId && w.templateId !== templateId)) continue;
     const key = by === 'week' ? addDays(w.date, 1 - isoWeekday(w.date)) : w.date;
-    out.set(key, (out.get(key) ?? 0) + w.volume);
+    const bar = out.get(key) ?? { volume: 0, templateId: by === 'week' ? null : (w.templateId ?? null) };
+    bar.volume += w.volume;
+    out.set(key, bar);
   }
-  return [...out].sort(([a], [b]) => (a < b ? -1 : 1)).map(([date, volume]) => ({ date, volume }));
+  return [...out].sort(([a], [b]) => (a < b ? -1 : 1)).map(([date, b]) => ({ date, ...b }));
 }
