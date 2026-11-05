@@ -22,8 +22,10 @@ export const getActiveWorkout = (): Promise<Workout | null> => loadActive();
 export const getWorkout = (id: string): Promise<WorkoutDetail | null> => loadWorkout(id);
 
 /** Starts today's workout; the server lifts a skip marked for today (SPEC §5.1). */
-export function startWorkout(): Promise<void> {
-  return create(doc.newWorkout(newId(), new Date(), today()));
+export async function startWorkout(title?: string): Promise<string> {
+  const w = doc.newWorkout(newId(), new Date(), today());
+  await create(title ? { ...w, title } : w);
+  return w.id;
 }
 
 /** Creates a finished (empty) workout on a past date, to be filled in via Edit. */
@@ -60,18 +62,18 @@ async function previousFor(w: WorkoutDetail, exerciseId: number, grip: Grip | nu
  * Adds exercises to the end. Grip exercises start with the last grip used. An exercise logged
  * before starts with the same sets (count, weight/reps, type) as its last workout.
  */
-export async function addExercises(workoutId: string, exerciseIds: number[]) {
+export async function addExercises(workoutId: string, exerciseIds: number[], weIds: string[] = []) {
   const w = await loadWorkout(workoutId);
   if (!w) return;
   const all = await listExercises();
   const items = await Promise.all(
-    exerciseIds.map(async (id) => {
+    exerciseIds.map(async (id, i) => {
       const exercise = all.find((e) => e.id === id);
       if (!exercise) throw new Error('Exercise not found');
       const grip = exercise.gripSet ? (exercise.lastGrip ?? defaultGrip(exercise.gripSet)) : null;
       const previous = await previousFor(w, id, grip);
       const setIds = previous.length ? previous.map(() => newId()) : [newId()];
-      return { weId: newId(), setIds, exercise, grip, previous };
+      return { weId: weIds[i] ?? newId(), setIds, exercise, grip, previous };
     }),
   );
   return mutate(workoutId, (d) => doc.addExercises(d, items));

@@ -185,3 +185,7 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-10-30 — Feedback round 7: set-edit and week-label fixes, Cardio category, cardio-aware duration,
   optional check-in + calendar marks, v1 import removed.
 - 2026-10-30 — Rest-timer Web Push: notification now comes with the app closed / phone locked (needs deploy + iPhone check).
+- 2026-11-05 — Workout templates (built-in Upper/Lower up-down split): Today's start button is split into
+  "Start workout" / "From template". A template workout shows empty sections (Chest 1, Back 1, …); tapping
+  one opens the picker limited to that muscle group. Sections left empty vanish on finish (nothing new in
+  the saved doc; slot fills live in localStorage, `repositories/templateRun.ts`). "Create template" is a stub.

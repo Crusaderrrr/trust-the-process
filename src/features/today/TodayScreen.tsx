@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import Icon from '../../components/Icon';
+import Sheet from '../../components/Sheet';
 import { btn, card, PageHeader, SectionTitle, Stat } from '../../components/ui';
 import { addDays, isoWeekday, parseLocalDate, today } from '../../domain/dates';
 import { formatWeight } from '../../domain/sets';
+import { TEMPLATES, type Template } from '../../domain/templates';
 import { formatDuration } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
+import { startRun } from '../../repositories/templateRun';
 import { SKIP_REASON_NAMES } from '../../repositories/skips';
 import { getActiveWorkout, listHistory, startWorkout } from '../../repositories/workouts';
 import { STATUS_NAME, STATUS_STYLE } from '../calendar/CalendarScreen';
@@ -23,9 +27,12 @@ export default function TodayScreen() {
   const week = days ?? [];
   const weekDone = week.filter((d) => d.status === 'done').length;
 
-  const start = async () => {
+  const [picking, setPicking] = useState(false);
+
+  const start = async (template?: Template) => {
     if (todayInfo?.skip && !confirm('Today is marked as skipped. Start a workout and remove the skip?')) return;
-    await startWorkout();
+    const id = await startWorkout(template?.name);
+    if (template) startRun(id, template.id);
     navigate('/workout');
   };
 
@@ -60,10 +67,15 @@ export default function TodayScreen() {
             Continue workout
           </Link>
         ) : (
-          <button className={`${btn.primary} text-lg`} onClick={start}>
-            <Icon name="play" className="h-6 w-6" />
-            Start workout
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button className={`${btn.primary} text-base`} onClick={() => start()}>
+              <Icon name="play" className="h-6 w-6" />
+              Start workout
+            </button>
+            <button className={`${btn.secondary} text-base`} onClick={() => setPicking(true)}>
+              From template
+            </button>
+          </div>
         )}
       </section>
 
@@ -105,6 +117,26 @@ export default function TodayScreen() {
             </div>
           </Link>
         </section>
+      )}
+
+      {picking && (
+        <Sheet title="Templates" onClose={() => setPicking(false)}>
+          <ul className={`${card} divide-y divide-white/[0.06]`}>
+            {TEMPLATES.map((t) => (
+              <li key={t.id}>
+                <button className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left" onClick={() => start(t)}>
+                  <span className="font-medium">{t.name}</span>
+                  <span className="text-sm text-neutral-400">{t.slots.map((s) => s.name).join(' · ')}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {/* Does nothing yet: template editing comes later. */}
+          <button className={`${btn.secondary} mt-3`}>
+            <Icon name="add" className="h-5 w-5" />
+            Create template
+          </button>
+        </Sheet>
       )}
     </div>
   );

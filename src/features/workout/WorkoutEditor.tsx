@@ -6,6 +6,7 @@ import SyncBadge from '../../components/SyncBadge';
 import { btn, card, input, Stat } from '../../components/ui';
 import { parseLocalDate, toLocalDate } from '../../domain/dates';
 import { formatWeight } from '../../domain/sets';
+import { layoutSlots, TEMPLATES, type TemplateSlot } from '../../domain/templates';
 import { formatClock, summarize } from '../../domain/workout';
 import { useNow } from '../../hooks/useDbQuery';
 import {
@@ -16,6 +17,7 @@ import {
   updateWorkout,
   type WorkoutDetail,
 } from '../../repositories/workouts';
+import { fillSlot, getRun } from '../../repositories/templateRun';
 import ExercisePicker from '../exercises/ExercisePicker';
 import ExerciseCard from './ExerciseCard';
 import FinishSheet, { resolvableSets } from './FinishSheet';
@@ -29,9 +31,13 @@ import RestBar from './RestBar';
  */
 export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetail; mode: 'active' | 'edit' }) {
   const navigate = useNavigate();
-  const [picker, setPicker] = useState<{ replace?: string } | null>(null);
+  const [picker, setPicker] = useState<{ replace?: string; slot?: TemplateSlot } | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [reordering, setReordering] = useState(false);
+
+  const run = mode === 'active' ? getRun(workout.id) : null;
+  const template = TEMPLATES.find((t) => t.id === run?.templateId);
+  const layout = template && run ? layoutSlots(template, run.fills, workout.exercises) : null;
 
   const allSets = workout.exercises.flatMap((e) => e.sets);
   const summary = summarize(allSets);
@@ -99,7 +105,28 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
       >
         {mode === 'edit' && <EditFields workout={workout} />}
 
-        {workout.exercises.map((we) => (
+        {layout?.rows.map(({ slot, we }) =>
+          we ? (
+            <ExerciseCard
+              key={we.id}
+              we={we}
+              workoutId={workout.id}
+              withRest
+              onReplace={() => setPicker({ replace: we.id, slot })}
+            />
+          ) : (
+            <button
+              key={slot.key}
+              className="flex items-center justify-between rounded-2xl border border-dashed border-neutral-700 px-4 py-4 text-left text-neutral-300 active:bg-neutral-900"
+              onClick={() => setPicker({ slot })}
+            >
+              <span className="font-medium">{slot.name}</span>
+              <Icon name="add" className="h-5 w-5 text-green-500" />
+            </button>
+          ),
+        )}
+
+        {(layout ? layout.extras : workout.exercises).map((we) => (
           <ExerciseCard
             key={we.id}
             we={we}
@@ -109,7 +136,7 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
           />
         ))}
 
-        {workout.exercises.length === 0 && (
+        {workout.exercises.length === 0 && !layout && (
           <div className="flex flex-col items-center gap-3 py-10 text-center text-neutral-500">
             <Icon name="dumbbell" className="h-12 w-12 text-neutral-700" />
             Add your first exercise to get started.
@@ -144,12 +171,18 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
 
       {picker && (
         <ExercisePicker
-          single={picker.replace !== undefined}
+          single={picker.replace !== undefined || !!picker.slot}
+          title={picker.slot?.name}
+          only={picker.slot?.muscle}
           onClose={() => setPicker(null)}
           onDone={(ids) => {
             setPicker(null);
             if (picker.replace !== undefined) void replaceExercise(workout.id, picker.replace, ids[0]!);
-            else void addExercises(workout.id, ids);
+            else if (picker.slot) {
+              const weId = crypto.randomUUID();
+              fillSlot(workout.id, picker.slot.key, weId); // before the add, so the slot is filled when the card appears
+              void addExercises(workout.id, ids, [weId]);
+            } else void addExercises(workout.id, ids);
           }}
         />
       )}
