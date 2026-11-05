@@ -193,5 +193,6 @@ Live URL: https://crusaderrrr.github.io/
   before it stay "no template"); per-account colours in `user_settings.template_colors`. History chart in
   Workout mode: bars take the template colour, filter chips All/Upper/Lower, colour swatches for the
   selected template, template name in the tooltip. Week mode adds everything together.
-- 2026-11-05 — Dev account: `npm run seed:dev` (re)creates `dev` in the local dev DB (see CLAUDE.md). Checked through
-  the API, not clicked through in a browser. Not seedable: push subscriptions and template slot fills (device-only).
+- 2026-11-05 — Dev account `dev` on the running app (not admin, credentials in `.env`); `npm run seed:dev` resets its
+  test data through the API. Checked through the API, not clicked through in a browser. Not seedable: push
+  subscriptions and template slot fills (device-only).

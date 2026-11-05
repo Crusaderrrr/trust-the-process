@@ -1,17 +1,17 @@
-// `npm run seed:dev`: (re)creates the `dev` account in the local dev database with data for every
-// feature. Re-running replaces the account, with dates relative to today. The URL is fixed on purpose
-// (DATABASE_URL is ignored) so this can never run against production; not part of the server build.
+// `npm run seed:dev`: fills the `dev` account with test data for every feature, through the app's API,
+// so it stays validated and never touches another account. Credentials come from .env. Re-running wipes
+// that account's workouts and skips first, with dates relative to today. Not part of the server build.
+// First run only: pass an invite (`docker exec ttp-app-1 node dist-server/cli.js invite`) as DEV_INVITE.
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { addDays, isoWeekday, parseLocalDate, today } from '../src/domain/dates.js';
-import { hashPassword } from './auth.js';
-import { connect, migrate, type Tx } from './db.js';
-import { seedExercises } from './seed.js';
 
-const DEV_DATABASE_URL = 'postgres://ttp:ttp@127.0.0.1:5433/ttp';
+const BASE_URL = process.env.DEV_BASE_URL ?? 'http://localhost:3000';
+// Fixed on purpose: the wipe below must never run as a real account, whatever .env says.
 const USERNAME = 'dev';
-const PASSWORD = 'ttp-dev-password';
+const PASSWORD = process.env.DEV_ACCOUNT_PASSWORD;
+if (!PASSWORD) throw new Error('DEV_ACCOUNT_PASSWORD is required (see .env)');
 const DEFAULT_REST = 150;
 
 type Lift = { name: string; kg: number; step: number; grips?: string[]; cardio?: [number, number, number] };
@@ -160,165 +160,174 @@ const CHECK_INS: [string, string[]][] = [
   ['bad', ['ate_badly', 'bad_mood']],
 ];
 
-async function insertWorkout(
-  tx: Tx,
-  uid: string,
-  w: { date: string; startedAt: Date; finishedAt: Date | null; title: string; templateId: string | null; notes: string | null; rating: string | null; feelings: string[] },
-) {
-  const id = randomUUID();
-  await tx`
-    INSERT INTO workout (id, user_id, title, date, started_at, finished_at, notes, rating, feelings, template_id)
-    VALUES (${id}, ${uid}, ${w.title}, ${w.date}, ${w.startedAt}, ${w.finishedAt}, ${w.notes}, ${w.rating},
-            ${tx.array(w.feelings, 1009 /* text[] */)}, ${w.templateId})`;
-  return id;
+let cookie = '';
+
+async function api<T = unknown>(method: string, url: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${BASE_URL}/api${url}`, {
+    method,
+    headers: { cookie, 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${method} ${url}: ${res.status} ${await res.text()}`);
+  return (await res.json()) as T;
 }
 
-async function insertExercise(tx: Tx, workoutId: string, exerciseId: string, position: number, grip: string | null, note: string | null) {
-  const id = randomUUID();
-  await tx`INSERT INTO workout_exercise ${tx({ id, workout_id: workoutId, exercise_id: exerciseId, position, grip, note })}`;
-  return id;
+/** Logs in, or signs up when the account doesn't exist yet. */
+async function enter(): Promise<void> {
+  const send = (url: string, body: object) =>
+    fetch(`${BASE_URL}/api/auth/${url}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  let res = await send('login', { username: USERNAME, password: PASSWORD });
+  if (res.status === 401) {
+    if (!process.env.DEV_INVITE) throw new Error('No such account (or wrong password). To create it, pass DEV_INVITE.');
+    res = await send('signup', { username: USERNAME, password: PASSWORD, invite: process.env.DEV_INVITE });
+  }
+  if (!res.ok) throw new Error(`Sign-in failed: ${res.status} ${await res.text()}`);
+  const { user } = (await res.json()) as { user: { username: string } };
+  if (user.username !== USERNAME) throw new Error(`Refusing to seed "${user.username}"`);
+  cookie = res.headers.getSetCookie()[0]!.split(';')[0]!;
 }
+
+async function wipe(now: string): Promise<void> {
+  const finished = await api<{ id: string }[]>('GET', '/history');
+  const { workout: active } = await api<{ workout: { id: string } | null }>('GET', '/workouts/active');
+  for (const { id } of active ? [...finished, active] : finished) await api('DELETE', `/workouts/${id}`);
+  for (const { date } of await api<{ date: string }[]>('GET', `/skips?from=${addDays(now, -1000)}&to=${now}`)) {
+    await api('DELETE', `/skips/${date}`);
+  }
+}
+
+type Exercise = { id: number; name: string; isCustom: number };
 
 /** Library tweaks: favourites, pinned rests, archived, and custom exercises of every kind. */
-async function setUpExercises(tx: Tx, uid: string) {
-  await seedExercises(tx, uid);
-  await tx`UPDATE exercise SET rest_seconds = ${DEFAULT_REST} WHERE user_id = ${uid} AND NOT rest_custom`;
-  await tx`UPDATE exercise SET favorite = true WHERE user_id = ${uid}
-           AND name IN ('Barbell Bench Press', 'Back Squat', 'Deadlift', 'Lat Pulldown')`;
-  for (const [name, seconds] of [['Deadlift', 240], ['Back Squat', 180], ['Lateral Raise', 60]] as const) {
-    await tx`UPDATE exercise SET rest_seconds = ${seconds}, rest_custom = true WHERE user_id = ${uid} AND name = ${name}`;
-  }
-  // Chin-Up has history (archive only); Shrug has none.
-  await tx`UPDATE exercise SET archived = true WHERE user_id = ${uid} AND name IN ('Chin-Up', 'Shrug')`;
+async function setUpExercises(): Promise<(name: string) => number> {
+  await api('PUT', '/settings', { defaultRestSeconds: DEFAULT_REST });
+  await api('PUT', '/settings/template-colors/upper', { color: '#a78bfa' });
 
   // An own photo is stored as a JPEG data URL.
   const photo = await readFile(path.resolve(import.meta.dirname, '../public/exercises/dumbbell-row.jpg'));
-  const custom = (name: string, muscle_group: string, equipment: string, extra: { image?: string; grip_set?: string; is_cardio?: boolean }) => ({
-    user_id: uid,
-    name,
-    muscle_group,
-    equipment,
-    is_custom: true,
-    image: extra.image ?? null,
-    grip_set: extra.grip_set ?? null,
-    is_cardio: extra.is_cardio ?? false,
-    rest_seconds: extra.is_cardio ? 0 : DEFAULT_REST,
-    rest_custom: extra.is_cardio ?? false,
-  });
-  await tx`INSERT INTO exercise ${tx([
-    custom('Landmine Press', 'chest', 'other', { image: `data:image/jpeg;base64,${photo.toString('base64')}` }),
-    custom('Chest-Supported Row', 'back', 'machine', { grip_set: 'back' }),
-    custom('Rowing Machine', 'cardio', 'machine', { is_cardio: true }),
-    custom('Sled Push', 'full_body', 'other', {}), // no history, so it can be hard-deleted
-  ])}`;
+  const custom = [
+    { name: 'Landmine Press', muscleGroup: 'chest', equipment: 'other', image: `data:image/jpeg;base64,${photo.toString('base64')}`, gripSet: null },
+    { name: 'Chest-Supported Row', muscleGroup: 'back', equipment: 'machine', image: null, gripSet: 'back' },
+    { name: 'Rowing Machine', muscleGroup: 'cardio', equipment: 'machine', image: null, gripSet: null },
+    { name: 'Sled Push', muscleGroup: 'full_body', equipment: 'other', image: null, gripSet: null }, // no history, so it can be hard-deleted
+  ];
+  const list = async () => [...(await api<Exercise[]>('GET', '/exercises')), ...(await api<Exercise[]>('GET', '/exercises?archived=1'))];
+  const existing = new Set((await list()).map((e) => e.name));
+  for (const c of custom) if (!existing.has(c.name)) await api('POST', '/exercises', c);
+
+  const ids = new Map((await list()).map((e) => [e.name, e.id]));
+  const idOf = (name: string) => {
+    const id = ids.get(name);
+    if (!id) throw new Error(`Unknown exercise: ${name}`);
+    return id;
+  };
+  for (const name of ['Barbell Bench Press', 'Back Squat', 'Deadlift', 'Lat Pulldown']) {
+    await api('PATCH', `/exercises/${idOf(name)}`, { favorite: true });
+  }
+  for (const [name, restSeconds] of [['Deadlift', 240], ['Back Squat', 180], ['Lateral Raise', 60]] as const) {
+    await api('PATCH', `/exercises/${idOf(name)}`, { restSeconds });
+  }
+  // Chin-Up has history (archive only); Shrug has none.
+  for (const name of ['Chin-Up', 'Shrug']) await api('PATCH', `/exercises/${idOf(name)}`, { archived: true });
+  return idOf;
 }
 
-const sql = connect(DEV_DATABASE_URL);
-try {
-  await migrate(sql);
-  const passwordHash = await hashPassword(PASSWORD);
-  const now = today();
-  const { workouts, skips } = schedule(now);
+const setDoc = (position: number, s: Partial<SetRow>, completed: boolean, autoFill = 0) => ({
+  id: randomUUID(),
+  position,
+  setType: s.type ?? 'normal',
+  weightKg: s.kg ?? null,
+  reps: s.reps ?? null,
+  speedKmh: s.speed ?? null,
+  inclinePct: s.incline ?? null,
+  completed: completed ? 1 : 0,
+  autoFill,
+});
 
-  const counts = await sql.begin(async (tx) => {
-    // Workouts first: workout_exercise blocks deleting its exercise, so don't rely on cascade order.
-    await tx`DELETE FROM workout WHERE user_id IN (SELECT id FROM app_user WHERE lower(username) = ${USERNAME})`;
-    await tx`DELETE FROM app_user WHERE lower(username) = ${USERNAME}`;
-    // Admin, so Settings → Invite a friend shows up.
-    const [user] = await tx<{ id: string }[]>`
-      INSERT INTO app_user (username, password_hash, is_admin) VALUES (${USERNAME}, ${passwordHash}, true) RETURNING id`;
-    const uid = user!.id;
-    await tx`INSERT INTO user_settings (user_id, default_rest_seconds, template_colors)
-             VALUES (${uid}, ${DEFAULT_REST}, ${tx.json({ upper: '#a78bfa' })})`;
-    await setUpExercises(tx, uid);
+await enter();
+const now = today();
+await wipe(now);
+const idOf = await setUpExercises();
+const { workouts, skips } = schedule(now);
 
-    const library = await tx<{ id: string; name: string }[]>`SELECT id, name FROM exercise WHERE user_id = ${uid}`;
-    const exerciseId = new Map(library.map((e) => [e.name, e.id]));
-    const idOf = (name: string) => {
-      const id = exerciseId.get(name);
-      if (!id) throw new Error(`Unknown exercise: ${name}`);
-      return id;
-    };
-
-    const sessionsDone = new Map<string, number>();
-    const setRows: Record<string, unknown>[] = [];
-    let index = 0;
-    for (const { date, hour, session } of workouts) {
-      const startedAt = parseLocalDate(date);
-      startedAt.setHours(hour, index % 45);
-      const finishedAt = new Date(startedAt.getTime() + (session.minutes + index % 15) * 60_000);
-      // Check-ins exist since recently: only the last two months have them, and not every workout.
-      const recent = date >= addDays(now, -60);
-      const checkIn = recent && index % 5 !== 4 ? CHECK_INS[index % CHECK_INS.length]! : null;
-      const workoutId = await insertWorkout(tx, uid, {
-        date,
-        startedAt,
-        finishedAt,
-        title: session.title,
-        templateId: session.templateId,
-        notes: index % 7 === 0 ? 'Gym was quiet, kept the rests honest.' : null,
-        rating: checkIn?.[0] ?? null,
-        feelings: checkIn?.[1] ?? [],
-      });
-      // Every third Lower body ends with some treadmill.
-      const lifts = session === LOWER && index % 3 === 0 ? [...session.lifts, cardio('Treadmill', 10 * 60, 8, 2)] : session.lifts;
-      for (const [position, l] of lifts.entries()) {
-        const n = sessionsDone.get(l.name) ?? 0;
-        sessionsDone.set(l.name, n + 1);
-        const note = position === 0 && index % 6 === 0 ? 'Left shoulder a bit tight, kept the elbows tucked.' : null;
-        const grip = l.grips ? l.grips[n % l.grips.length]! : null;
-        const weId = await insertExercise(tx, workoutId, idOf(l.name), position, grip, note);
-        setsFor(l, n, position === 0, position === lifts.length - 1).forEach((s, p) =>
-          setRows.push({
-            id: randomUUID(),
-            workout_exercise_id: weId,
-            position: p,
-            set_type: s.type,
-            weight_kg: s.kg,
-            reps: s.reps,
-            speed_kmh: s.speed ?? null,
-            incline_pct: s.incline ?? null,
-            completed: true,
-            auto_fill: 0,
-          }),
-        );
-      }
-      index++;
-    }
-
-    // A workout in progress: some sets done, the rest prefilled but open. Discard it in the app to get
-    // the "Start workout" state back; re-seeding restores it.
-    const startedAt = new Date(Date.now() - 35 * 60_000);
-    const activeId = await insertWorkout(tx, uid, { date: now, startedAt, finishedAt: null, title: 'Push day', templateId: null, notes: null, rating: null, feelings: [] });
-    const open = (we: string, position: number, kg: number | null, reps: number | null, done: boolean) =>
-      setRows.push({
+const sessionsDone = new Map<string, number>();
+let index = 0;
+for (const { date, hour, session } of workouts) {
+  const startedAt = parseLocalDate(date);
+  startedAt.setHours(hour, index % 45);
+  const finishedAt = new Date(startedAt.getTime() + (session.minutes + index % 15) * 60_000);
+  // Check-ins exist since recently: only the last two months have them, and not every workout.
+  const checkIn = date >= addDays(now, -60) && index % 5 !== 4 ? CHECK_INS[index % CHECK_INS.length]! : null;
+  // Every third Lower body ends with some treadmill.
+  const lifts = session === LOWER && index % 3 === 0 ? [...session.lifts, cardio('Treadmill', 10 * 60, 8, 2)] : session.lifts;
+  const id = randomUUID();
+  await api('PUT', `/workouts/${id}`, {
+    id,
+    title: session.title,
+    date,
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    notes: index % 7 === 0 ? 'Gym was quiet, kept the rests honest.' : null,
+    restEndsAt: null,
+    rating: checkIn?.[0] ?? null,
+    feelings: checkIn?.[1] ?? [],
+    templateId: session.templateId,
+    exercises: lifts.map((l, position) => {
+      const n = sessionsDone.get(l.name) ?? 0;
+      sessionsDone.set(l.name, n + 1);
+      return {
         id: randomUUID(),
-        workout_exercise_id: we,
+        exerciseId: idOf(l.name),
         position,
-        set_type: 'normal',
-        weight_kg: kg,
-        reps,
-        speed_kmh: null,
-        incline_pct: null,
-        completed: done,
-        // bit 1 = weight, bit 2 = reps: dimmed until edited
-        auto_fill: !done && kg !== null ? 3 : 0,
-      });
-    const bench = await insertExercise(tx, activeId, idOf('Barbell Bench Press'), 0, null, 'Pause on the chest');
-    open(bench, 0, 110, 8, true);
-    open(bench, 1, 110, 8, true);
-    open(bench, 2, 110, 8, false);
-    const pulldown = await insertExercise(tx, activeId, idOf('Lat Pulldown'), 1, 'wide', null);
-    open(pulldown, 0, 52.5, 10, false);
-    open(pulldown, 1, null, null, false);
-    const treadmill = await insertExercise(tx, activeId, idOf('Treadmill'), 2, null, null);
-    open(treadmill, 0, null, null, false);
-
-    await tx`INSERT INTO workout_set ${tx(setRows as never[])}`;
-    for (const s of skips) await tx`INSERT INTO skip ${tx({ user_id: uid, ...s })}`;
-    return { workouts: workouts.length, sets: setRows.length, skips: skips.length };
+        grip: l.grips ? l.grips[n % l.grips.length]! : null,
+        note: position === 0 && index % 6 === 0 ? 'Left shoulder a bit tight, kept the elbows tucked.' : null,
+        sets: setsFor(l, n, position === 0, position === lifts.length - 1).map((s, p) => setDoc(p, s, true)),
+      };
+    }),
   });
-  console.log(`Seeded "${USERNAME}" / "${PASSWORD}": ${counts.workouts} finished workouts + 1 active, ${counts.sets} sets, ${counts.skips} skips.`);
-} finally {
-  await sql.end();
+  index++;
 }
+
+// A workout in progress: some sets done, the rest prefilled but open (autoFill 3 = dimmed until edited).
+// Discard it in the app to get the "Start workout" state back; re-seeding restores it.
+const activeId = randomUUID();
+await api('PUT', `/workouts/${activeId}`, {
+  id: activeId,
+  title: 'Push day',
+  date: now,
+  startedAt: new Date(Date.now() - 35 * 60_000).toISOString(),
+  finishedAt: null,
+  notes: null,
+  restEndsAt: null,
+  rating: null,
+  feelings: [],
+  templateId: null,
+  exercises: [
+    {
+      id: randomUUID(),
+      exerciseId: idOf('Barbell Bench Press'),
+      position: 0,
+      grip: null,
+      note: 'Pause on the chest',
+      sets: [
+        setDoc(0, { kg: 110, reps: 8 }, true),
+        setDoc(1, { kg: 110, reps: 8 }, true),
+        setDoc(2, { kg: 110, reps: 8 }, false, 3),
+      ],
+    },
+    {
+      id: randomUUID(),
+      exerciseId: idOf('Lat Pulldown'),
+      position: 1,
+      grip: 'wide',
+      note: null,
+      sets: [setDoc(0, { kg: 52.5, reps: 10 }, false, 3), setDoc(1, {}, false)],
+    },
+    { id: randomUUID(), exerciseId: idOf('Treadmill'), position: 2, grip: null, note: null, sets: [setDoc(0, {}, false)] },
+  ],
+});
+
+// After the workouts: logging a new workout on a skipped day lifts the skip.
+for (const { date, ...skip } of skips) await api('PUT', `/skips/${date}`, skip);
+await api('POST', '/auth/logout', {});
+console.log(`Seeded "${USERNAME}" at ${BASE_URL}: ${workouts.length} finished workouts + 1 active, ${skips.length} skips.`);
