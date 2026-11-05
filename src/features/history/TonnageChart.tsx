@@ -124,6 +124,8 @@ export default function TonnageChart({
                 border: "1px solid #262626",
                 borderRadius: 12,
               }}
+              labelStyle={{ color: "#ffffff" }}
+              itemStyle={{ color: "#ffffff" }}
               labelFormatter={(d) =>
                 by === "week" ? weekRange(String(d)) : shortDate(String(d))
               }
