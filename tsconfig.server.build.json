@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.server.json",
   "compilerOptions": { "noEmit": false, "rootDir": "server", "outDir": "dist-server" },
-  "exclude": ["server/**/*.test.ts", "server/test-db.ts"]
+  "exclude": ["server/**/*.test.ts", "server/test-db.ts", "server/dev-seed.ts"]
 }

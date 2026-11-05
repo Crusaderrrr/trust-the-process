@@ -12,7 +12,8 @@
     "typecheck": "tsc && tsc -p tsconfig.server.json",
     "build:server": "tsc -p tsconfig.server.build.json",
     "dev:server": "tsx watch --env-file-if-exists=.env.local server/index.ts",
-    "db:dev": "docker compose -f compose.dev.yml up -d --wait"
+    "db:dev": "docker compose -f compose.dev.yml up -d --wait",
+    "seed:dev": "tsx server/dev-seed.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",

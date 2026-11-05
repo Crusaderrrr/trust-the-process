@@ -21,6 +21,16 @@ a task changes state. The plan to go public is `ROADMAP.md`; unscheduled ideas l
 
 Run `typecheck` and `test` before saying a task is done.
 
+## Dev account
+Local dev database only; it doesn't exist in production, and must never be created there (this repo is public).
+- Username `dev`, password `ttp-dev-password` (admin).
+- `npm run db:dev && npm run seed:dev` creates it, or resets it to fresh data (`server/dev-seed.ts`):
+  about 2.5 years of workouts (templates, grips, set types, cardio, notes, check-ins), every skip reason,
+  a workout in progress, favourites, archived and custom exercises.
+- Vite proxies `/api` to port 3000, which is the production container when that stack is up. To stay on
+  dev data, serve the built app on another port and open http://localhost:3001:
+  `npm run build && DATABASE_URL=postgres://ttp:ttp@127.0.0.1:5433/ttp PORT=3001 npm run dev:server`
+
 ## Architecture rules
 - UI → `src/repositories/` → `src/api/client.ts` → Hono routes in `server/routes/` → Postgres.
   SQL only in `server/` (migrations in `server/migrations/`, never edit an applied one).
