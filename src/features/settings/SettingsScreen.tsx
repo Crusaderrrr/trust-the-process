@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Sheet from '../../components/Sheet';
 import { btn, card, PageHeader, Row, SectionTitle } from '../../components/ui';
+import { today } from '../../domain/dates';
 import { formatRest, REST_OPTIONS } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import { getDefaultRest, setDefaultRest } from '../../repositories/exercises';
+import { exportData, importFile } from '../../repositories/dataTransfer';
 import { useAuth } from '../auth/AuthGate';
 import InviteSheet from './InviteSheet';
 
@@ -13,6 +15,44 @@ export default function SettingsScreen() {
   const [restSheet, setRestSheet] = useState(false);
   const { user, logout } = useAuth();
   const [inviteSheet, setInviteSheet] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
+  const [importing, setImporting] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  async function runImport(file: File) {
+    setImporting(true);
+    try {
+      const r = await importFile({ name: file.name, text: await file.text() }, (done, total) =>
+        setImportMsg(`Importing… ${done}/${total}`),
+      );
+      setImportMsg(
+        `Imported ${r.workouts} workouts.` +
+          (r.newExercises.length ? ` Created ${r.newExercises.length} new exercises.` : ''),
+      );
+    } catch (e) {
+      setImportMsg(`Import failed: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      setImporting(false);
+    }
+  }
+  async function runExport() {
+    setImporting(true);
+    setImportMsg('Exporting…');
+    try {
+      const url = URL.createObjectURL(new Blob([await exportData()], { type: 'application/json' }));
+      const a = Object.assign(document.createElement('a'), {
+        href: url,
+        download: `ttp-export-${today()}.json`,
+      });
+      a.click();
+      URL.revokeObjectURL(url);
+      setImportMsg('Exported.');
+    } catch (e) {
+      setImportMsg(`Export failed: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      setImporting(false);
+    }
+  }
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title="Settings" />
@@ -30,7 +70,8 @@ export default function SettingsScreen() {
         <button
           className={btn.danger}
           onClick={() =>
-            confirm('Log out of this device?') && void logout().catch((e: unknown) => setMessage(`Log out failed: ${e}`))
+            confirm('Log out of this device?') &&
+            void logout().catch((e: unknown) => setMessage(`Log out failed: ${e}`))
           }
         >
           Log out
@@ -56,9 +97,40 @@ export default function SettingsScreen() {
       </section>
 
       <section className="flex flex-col gap-2">
+        <SectionTitle>Data</SectionTitle>
+        <button className={btn.secondary} disabled={importing} onClick={() => void runExport()}>
+          Export my workouts (JSON)
+        </button>
+        <button className={btn.secondary} disabled={importing} onClick={() => fileInput.current?.click()}>
+          Import workouts (TTP JSON or Hevy CSV)
+        </button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept=".json,.csv,application/json,text/csv"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (f) void runImport(f);
+          }}
+        />
+        {importMsg && <p className="px-1 text-sm text-neutral-300">{importMsg}</p>}
+        <p className="px-1 text-xs text-neutral-500">
+          Hevy: Profile → Settings → Export &amp; Import Data → Export. Importing a file again replaces, not duplicates.
+          Exercises are matched by name; unknown ones are created.
+        </p>
+      </section>
+
+      <section className="flex flex-col gap-2">
         <SectionTitle>About</SectionTitle>
         <div className={`${card} overflow-hidden`}>
-          <Row icon="settings" iconBg="bg-neutral-600" title="Build" detail={new Date(__BUILD_TIME__).toLocaleString('en-GB')} />
+          <Row
+            icon="settings"
+            iconBg="bg-neutral-600"
+            title="Build"
+            detail={new Date(__BUILD_TIME__).toLocaleString('en-GB')}
+          />
         </div>
         <p className="px-1 text-xs text-neutral-500">
           Trust The Process · Exercise photos: free-exercise-db (public domain) · Icons: Material Symbols

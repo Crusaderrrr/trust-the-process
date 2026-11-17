@@ -196,3 +196,9 @@ Live URL: https://crusaderrrr.github.io/
 - 2026-11-05 — Dev account `dev` on the running app (not admin, credentials in `.env`); `npm run seed:dev` resets its
   test data through the API. Checked through the API, not clicked through in a browser. Not seedable: push
   subscriptions and template slot fills (device-only).
+
+## Hevy import (2026-11-17)
+- [x] Settings → Data → "Import from Hevy (CSV)": `domain/hevyImport.ts` (parser + tests) → `repositories/dataTransfer.ts` (matches exercises by name, creates unknown ones, PUTs each workout; deterministic ids so re-import replaces)
+- [ ] Try on the dev account with the real export (not run against a server yet: Docker was off)
+- [x] JSON export/import of finished workouts (`domain/dataExport.ts`, Settings → Data); the same import button reads TTP JSON or Hevy CSV by file extension
+- [ ] Render + Neon migration: plan and runbook in `MIGRATE-RENDER.md` (not started)
