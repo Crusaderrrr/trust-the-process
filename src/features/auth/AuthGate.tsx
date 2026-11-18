@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type FormE
 import * as authApi from '../../api/auth';
 import { isNetworkError } from '../../api/client';
 import { btn, input } from '../../components/ui';
+import { clearQueryCache } from '../../hooks/useDbQuery';
 import { forgetExercises } from '../../repositories/exerciseCache';
 import { forgetLastSets } from '../../repositories/lastSets';
 
@@ -58,6 +59,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   }, []);
 
   const onAuthed = useCallback((user: authApi.User) => {
+    clearQueryCache(); // a session that expired may be followed by a different account
     remember(user);
     setGate({ status: 'user', user });
   }, []);
@@ -66,7 +68,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     remember(null);
     forgetExercises();
     forgetLastSets();
-    // The SQLite worker, caches and route state all belong to the previous account.
+    // Caches and route state all belong to the previous account.
     location.reload();
   }, []);
 

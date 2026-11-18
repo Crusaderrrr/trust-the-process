@@ -5,7 +5,7 @@ import { defaultGrip, type Grip } from '../domain/exercises';
 import type { CompletedValues, SetType, SetValues } from '../domain/sets';
 import * as doc from '../domain/workoutDoc';
 import type { Workout, WorkoutDetail } from '../domain/workoutDoc';
-import { listExercises } from './exercises';
+import { exercisesById } from './exercises';
 import { previousFromDevice, rememberFinished } from './lastSets';
 import { create, loadActive, loadWorkout, mutate, remove, settled } from './workoutStore';
 
@@ -65,11 +65,10 @@ async function previousFor(w: WorkoutDetail, exerciseId: number, grip: Grip | nu
 export async function addExercises(workoutId: string, exerciseIds: number[], weIds: string[] = []) {
   const w = await loadWorkout(workoutId);
   if (!w) return;
-  const all = await listExercises();
+  const found = await exercisesById(exerciseIds);
   const items = await Promise.all(
     exerciseIds.map(async (id, i) => {
-      const exercise = all.find((e) => e.id === id);
-      if (!exercise) throw new Error('Exercise not found');
+      const exercise = found[i]!;
       const grip = exercise.gripSet ? (exercise.lastGrip ?? defaultGrip(exercise.gripSet)) : null;
       const previous = await previousFor(w, id, grip);
       const setIds = previous.length ? previous.map(() => newId()) : [newId()];
@@ -86,7 +85,7 @@ export async function replaceExercise(workoutId: string, weId: string, exerciseI
   const w = await loadWorkout(workoutId);
   const current = w?.exercises.find((e) => e.id === weId);
   if (!w || !current) return;
-  const exercise = (await listExercises()).find((e) => e.id === exerciseId);
+  const [exercise] = await exercisesById([exerciseId]);
   if (!exercise) throw new Error('Exercise not found');
   const previous = await previousFor(w, exerciseId, doc.replacedGrip(current, exercise.gripSet));
   return mutate(workoutId, (d) => doc.replaceExercise(d, weId, exercise, previous));

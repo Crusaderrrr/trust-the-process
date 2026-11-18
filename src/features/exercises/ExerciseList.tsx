@@ -5,6 +5,7 @@ import { btn, card, input, SectionTitle } from "../../components/ui";
 import { useDbQuery } from "../../hooks/useDbQuery";
 import {
   label,
+  cachedLibrary,
   listExercises,
   MUSCLE_GROUPS,
   setFavorite,
@@ -30,7 +31,14 @@ export default function ExerciseList({
   only?: MuscleGroup;
   onPick: (e: Exercise) => void;
 }) {
-  const all = useDbQuery(() => listExercises(archived), [archived]);
+  // The device copy shows at once; the server's list replaces it when it arrives.
+  const all = useDbQuery(() => listExercises(archived), [archived], {
+    key: "exercises",
+    initial: () => {
+      const copy = cachedLibrary(archived);
+      return copy.length ? copy : undefined; // nothing kept yet: wait, don't claim the library is empty
+    },
+  });
   const [search, setSearch] = useState("");
   const [muscle, setMuscle] = useState<MuscleGroup | null>(only ?? null);
 

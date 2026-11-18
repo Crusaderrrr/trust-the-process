@@ -44,7 +44,7 @@ export default function ExerciseProgressScreen() {
   const data = useDbQuery(async () => {
     const [exercise, sessions] = await Promise.all([getExercise(id), sessionsByExercise({ exerciseId: id })]);
     return { exercise, sessions: sessions.get(id) ?? [] };
-  }, [id]);
+  }, [id], { key: 'exercise-progress' });
 
   if (!data) return null;
   const { exercise, sessions: allSessions } = data;

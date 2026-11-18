@@ -26,6 +26,8 @@ export async function api<T>(method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
     const message = (data as { message?: string } | null)?.message ?? `Request failed (${res.status})`;
     throw new ApiError(res.status, message);
   }
-  if (method !== 'GET') notifyChange();
+  // Saving a workout document changes nothing on screen (the local copy is the truth; every edit already
+  // notified), so it must not make every mounted query hit the server again.
+  if (method !== 'GET' && !(method === 'PUT' && path.startsWith('/workouts/'))) notifyChange();
   return data as T;
 }

@@ -22,14 +22,14 @@ export default function TodayScreen() {
   const weekStart = addDays(t, 1 - isoWeekday(t));
   const days = useDays(weekStart, addDays(weekStart, 6));
   const active = useDbQuery(getActiveWorkout, []);
-  const last = useDbQuery(async () => (await listHistory())[0] ?? null, []);
+  const last = useDbQuery(async () => (await listHistory())[0] ?? null, [], { key: 'last-workout' });
 
   const todayInfo = days?.find((d) => d.date === t);
   const week = days ?? [];
   const weekDone = week.filter((d) => d.status === 'done').length;
 
   const [picking, setPicking] = useState(false);
-  const colors = useDbQuery(getTemplateColors, []);
+  const colors = useDbQuery(getTemplateColors, [], { key: 'template-colors' });
 
   const start = async (template?: Template) => {
     if (todayInfo?.skip && !confirm('Today is marked as skipped. Start a workout and remove the skip?')) return;

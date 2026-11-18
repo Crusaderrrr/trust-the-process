@@ -40,7 +40,8 @@ export default function WorkoutEditor({ workout, mode }: { workout: WorkoutDetai
   const template = TEMPLATES.find((t) => t.id === run?.templateId);
   const layout = template && run ? layoutSlots(template, run.fills, workout.exercises) : null;
 
-  const colors = useDbQuery(getTemplateColors, []);
+  // Colours change only in Settings: not worth a request per edit.
+  const colors = useDbQuery(getTemplateColors, [], { key: 'template-colors', refetch: false });
 
   const allSets = workout.exercises.flatMap((e) => e.sets);
   const summary = summarize(allSets);

@@ -18,7 +18,7 @@ export default function HistoryScreen() {
   const data = useDbQuery(async () => {
     const [items, sessions] = await Promise.all([listHistory(), sessionsByExercise()]);
     return { items, prs: prCountByWorkout([...sessions.values()]) };
-  }, []);
+  }, [], { key: 'history' });
 
   return (
     <div className="flex flex-col gap-4">

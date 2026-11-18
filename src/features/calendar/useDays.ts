@@ -31,5 +31,5 @@ export function useDays(from: string, to: string): DayInfo[] | undefined {
         status: dayStatus({ done: ws.length > 0, skipped: !!skip }),
       };
     });
-  }, [from, to]);
+  }, [from, to], { key: 'days' });
 }

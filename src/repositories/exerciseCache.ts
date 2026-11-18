@@ -49,6 +49,30 @@ export function cacheList(archived: boolean, list: Exercise[]) {
 
 export const cachedList = (archived: boolean) => read<Exercise[]>(LIST_KEY + (archived ? ':archived' : ''), []);
 
+const byName = (x: Exercise, y: Exercise) => x.name.localeCompare(y.name);
+
+/** The library as the device last saw it, plus exercises waiting to upload: shown at once, refreshed after. */
+export const cachedLibrary = (archived: boolean): Exercise[] =>
+  archived ? cachedList(true) : [...cachedList(false), ...pendingExercises()].sort(byName);
+
+/** Keeps the device copy in step after one exercise changed or was created, without waiting for a full refresh. */
+export function cacheUpdate(e: Exercise) {
+  for (const archived of [false, true]) {
+    const list = cachedList(archived);
+    const rest = list.filter((x) => x.id !== e.id);
+    if (!!e.archived === archived) cacheList(archived, [...rest, e].sort(byName));
+    else if (rest.length !== list.length) cacheList(archived, rest);
+  }
+}
+
+export function cacheRemove(id: number) {
+  for (const archived of [false, true]) {
+    const list = cachedList(archived);
+    const rest = list.filter((x) => x.id !== id);
+    if (rest.length !== list.length) cacheList(archived, rest);
+  }
+}
+
 /** Queued exercises as library entries, so lists and pickers can show them offline. */
 export const pendingExercises = (): Exercise[] =>
   pending().map(({ tempId, body }) => {

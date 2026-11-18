@@ -39,7 +39,7 @@ export default function TonnageChart({
   const [by, setBy] = useState<"workout" | "week">("week");
   // Templates only matter per workout; a week adds up every kind of workout.
   const [templateId, setTemplateId] = useState<string | null>(null);
-  const picked = useDbQuery(getTemplateColors, []);
+  const picked = useDbQuery(getTemplateColors, [], { key: 'template-colors' });
   const selected = by === "workout" ? templateId : null;
   const data = tonnage(workouts, by, rangeStart(range, today()), selected);
 

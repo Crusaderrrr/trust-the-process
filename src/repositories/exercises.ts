@@ -15,7 +15,16 @@ import {
   type MuscleGroup,
 } from '../domain/exercises';
 import { patchExerciseInfo } from '../domain/workoutDoc';
-import { cachedList, cacheList, isTempId, pendingExercises, queueExercise } from './exerciseCache';
+import {
+  cachedLibrary,
+  cachedList,
+  cacheList,
+  cacheRemove,
+  cacheUpdate,
+  isTempId,
+  pendingExercises,
+  queueExercise,
+} from './exerciseCache';
 import { dropCleanDocs, patchOpenDocs, syncExercises } from './workoutStore';
 
 // The exercise types and constants live in domain/; re-exported so screens import from one place.
@@ -31,9 +40,27 @@ export async function listExercises(archived = false): Promise<Exercise[]> {
     return list;
   } catch (e) {
     if (!isNetworkError(e)) throw e;
-    const list = cachedList(archived);
-    return archived ? list : [...list, ...pendingExercises()].sort((x, y) => x.name.localeCompare(y.name));
+    return cachedLibrary(archived);
   }
+}
+
+/** The library from the device copy, no waiting; `listExercises` refreshes it. */
+export { cachedLibrary };
+
+/**
+ * Exercises by id for adding to a workout. The device copy is enough for plain exercises; a grip
+ * exercise needs its `lastGrip` fresh (it follows the latest workout), and an unknown id may be new.
+ */
+export async function exercisesById(ids: number[]): Promise<Exercise[]> {
+  const copy = cachedLibrary(false);
+  const found = ids.map((id) => copy.find((e) => e.id === id));
+  if (found.every((e) => e && !e.gripSet)) return found as Exercise[];
+  const all = await listExercises();
+  return ids.map((id) => {
+    const e = all.find((x) => x.id === id);
+    if (!e) throw new Error('Exercise not found');
+    return e;
+  });
 }
 
 export async function getExercise(id: number): Promise<Exercise | undefined> {
@@ -59,7 +86,9 @@ export async function createExercise(e: {
   const body = { ...e, name: e.name.trim() };
   if (!body.name) throw new Error('Enter a name.');
   try {
-    return (await api<Exercise>('POST', '/exercises', body)).id;
+    const created = await api<Exercise>('POST', '/exercises', body);
+    cacheUpdate(created);
+    return created.id;
   } catch (err) {
     if (!isNetworkError(err)) throw err;
     const taken = [...cachedList(false), ...cachedList(true), ...pendingExercises()];
@@ -74,10 +103,16 @@ export async function createExercise(e: {
 
 /** Custom exercises without history are deleted; anything with history is archived (SPEC §4). */
 export async function removeExercise(id: number): Promise<'deleted' | 'archived'> {
-  return (await api<{ result: 'deleted' | 'archived' }>('DELETE', `/exercises/${id}`)).result;
+  const { result } = await api<{ result: 'deleted' | 'archived' }>('DELETE', `/exercises/${id}`);
+  cacheRemove(id); // an archived one reappears in the archived list at its next refresh
+  return result;
 }
 
-const patch = (id: number, body: object) => api<Exercise>('PATCH', `/exercises/${id}`, body);
+async function patch(id: number, body: object) {
+  const e = await api<Exercise>('PATCH', `/exercises/${id}`, body);
+  cacheUpdate(e);
+  return e;
+}
 
 export const unarchiveExercise = (id: number) => patch(id, { archived: false });
 
