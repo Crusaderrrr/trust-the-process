@@ -31,8 +31,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Without *.wasm the app opens offline but the DB never starts (SPEC §7).
-        globPatterns: ['**/*.{js,css,html,wasm,png,svg,jpg}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,jpg}'],
         // Web Push handler (public/push-sw.js): shows the rest timer's "Time's up" while the app is closed.
         importScripts: ['push-sw.js'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
@@ -41,8 +40,6 @@ export default defineConfig({
       },
     }),
   ],
-  optimizeDeps: { exclude: ['@sqlite.org/sqlite-wasm'] },
-  worker: { format: 'es' },
   // `npm run dev:server` listens here; same-origin cookies then work in dev too.
   server: { proxy: { '/api': 'http://localhost:3000' } },
   test: { include: ['src/**/*.test.ts', 'server/**/*.test.ts'] },

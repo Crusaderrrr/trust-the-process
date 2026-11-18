@@ -41,7 +41,6 @@ Test account `dev` on the running app (production DB, not admin): log in there t
 - Local dates via `domain/dates.ts` only — never `toISOString()` for calendar dates.
 - ISO weekdays (1 = Mon … 7 = Sun); convert from JS `getDay()` in one helper.
 - `HashRouter`. Writes must be JSON (CSRF guard); CSP is strict.
-- `src/db/` (old SQLite worker) is unused legacy; don't build on it.
 
 ## Style
 - UI language: English. Mobile-first, dark mode default, Tailwind. kg only.

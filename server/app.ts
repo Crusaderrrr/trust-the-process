@@ -18,11 +18,10 @@ export function createApp(sql: Sql, staticDir: string, push: Push = createPush(s
   app.use(
     secureHeaders({
       xFrameOptions: 'DENY',
-      // 'wasm-unsafe-eval' is for sqlite-wasm (the v1 data layer, until the API replaces it);
       // 'unsafe-inline' styles because React sets style attributes. Nothing loads from other origins.
       contentSecurityPolicy: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+        scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'blob:'],
         workerSrc: ["'self'", 'blob:'],
