@@ -27,27 +27,43 @@ export async function previousSets(
   grip: string | null,
   before: { date: string; startedAt: string; excludeWorkoutId: string | null },
 ): Promise<SetValuesJson[]> {
-  const rows = await sql<Row[]>`
-    SELECT s.weight_kg, s.reps, s.speed_kmh, s.incline_pct, s.set_type
-    FROM workout_set s
-    WHERE s.completed AND s.workout_exercise_id = (
+  return (await previousSetsMany(sql, userId, [{ exerciseId, grip }], before)).get(previousKey(exerciseId, grip)) ?? [];
+}
+
+export const previousKey = (exerciseId: number, grip: string | null) => `${exerciseId}|${grip}`;
+
+/** `previousSets` for several (exercise, grip) pairs in one round trip; keyed by `previousKey`. */
+export async function previousSetsMany(
+  sql: Sql,
+  userId: number,
+  pairs: { exerciseId: number; grip: string | null }[],
+  before: { date: string; startedAt: string; excludeWorkoutId: string | null },
+): Promise<Map<string, SetValuesJson[]>> {
+  const out = new Map<string, SetValuesJson[]>();
+  if (!pairs.length) return out;
+  const rows = await sql<(Row & { exercise_id: string; pair_grip: string | null })[]>`
+    SELECT p.exercise_id, p.grip AS pair_grip, s.weight_kg, s.reps, s.speed_kmh, s.incline_pct, s.set_type
+    FROM unnest(${sql.array(pairs.map((p) => p.exerciseId), 20 /* int8[] */)}::bigint[],
+                ${sql.array(pairs.map((p) => p.grip), 1009 /* text[] */)}::text[]) AS p(exercise_id, grip)
+    CROSS JOIN LATERAL (
       SELECT we.id FROM workout_exercise we JOIN workout w ON w.id = we.workout_id
-      WHERE w.user_id = ${userId} AND we.exercise_id = ${exerciseId}
-        AND (${grip}::text IS NULL OR we.grip IS NOT DISTINCT FROM ${grip}::text OR we.grip IS NULL)
+      WHERE w.user_id = ${userId} AND we.exercise_id = p.exercise_id
+        AND (p.grip IS NULL OR we.grip IS NOT DISTINCT FROM p.grip OR we.grip IS NULL)
         AND w.finished_at IS NOT NULL
         AND EXISTS (SELECT 1 FROM workout_set s2 WHERE s2.workout_exercise_id = we.id AND s2.completed)
         AND (${before.excludeWorkoutId}::uuid IS NULL OR w.id <> ${before.excludeWorkoutId}::uuid)
         AND (w.date, w.started_at) < (${before.date}::text, ${before.startedAt}::timestamptz)
-      ORDER BY (we.grip IS NOT DISTINCT FROM ${grip}::text) DESC, w.date DESC, w.started_at DESC, we.position
-      LIMIT 1)
-    ORDER BY s.position, s.id`;
-  return rows.map((r) => ({
-    weightKg: r.weight_kg,
-    reps: r.reps,
-    speedKmh: r.speed_kmh,
-    inclinePct: r.incline_pct,
-    setType: r.set_type,
-  }));
+      ORDER BY (we.grip IS NOT DISTINCT FROM p.grip) DESC, w.date DESC, w.started_at DESC, we.position
+      LIMIT 1) pick
+    JOIN workout_set s ON s.workout_exercise_id = pick.id AND s.completed
+    ORDER BY p.exercise_id, p.grip, s.position, s.id`;
+  for (const r of rows) {
+    const key = previousKey(Number(r.exercise_id), r.pair_grip);
+    const list = out.get(key) ?? [];
+    list.push({ weightKg: r.weight_kg, reps: r.reps, speedKmh: r.speed_kmh, inclinePct: r.incline_pct, setType: r.set_type });
+    out.set(key, list);
+  }
+  return out;
 }
 
 export type LastSetsJson = {

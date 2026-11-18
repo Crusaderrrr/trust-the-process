@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Sql } from '../db.js';
 import type { Push } from '../push.js';
-import { previousSets, type SetValuesJson } from '../previous.js';
+import { previousKey, previousSetsMany } from '../previous.js';
 import { DATE_RE, FEELINGS, GRIPS, isUniqueViolation, iso, parseBody, privateRouter, RATINGS, SET_TYPES, userId } from './util.js';
 
 // A workout travels as one document: the workout, its exercises, their sets. The client edits the
@@ -68,53 +68,58 @@ async function loadWorkout(sql: Sql, uid: number, id: string) {
     FROM workout WHERE id = ${id} AND user_id = ${uid}`;
   if (!w) return null;
 
-  const exercises = await sql<
-    {
-      id: string;
-      exercise_id: string;
-      name: string;
-      muscle_group: string;
-      image: string | null;
-      rest_seconds: number;
-      rest_custom: boolean;
-      grip_set: string | null;
-      is_cardio: boolean;
-      grip: string | null;
-      note: string | null;
-      position: number;
-    }[]
-  >`
-    SELECT we.id, we.exercise_id, e.name, e.muscle_group, e.image, e.rest_seconds, e.rest_custom,
-           e.grip_set, e.is_cardio, we.grip, we.note, we.position
-    FROM workout_exercise we JOIN exercise e ON e.id = we.exercise_id
-    WHERE we.workout_id = ${id} ORDER BY we.position, we.id`;
-  const sets = await sql<
-    {
-      id: string;
-      workout_exercise_id: string;
-      position: number;
-      set_type: string;
-      weight_kg: number | null;
-      reps: number | null;
-      speed_kmh: number | null;
-      incline_pct: number | null;
-      completed: boolean;
-      auto_fill: number;
-    }[]
-  >`
-    SELECT s.id, s.workout_exercise_id, s.position, s.set_type, s.weight_kg, s.reps, s.speed_kmh,
-           s.incline_pct, s.completed, s.auto_fill
-    FROM workout_set s JOIN workout_exercise we ON we.id = s.workout_exercise_id
-    WHERE we.workout_id = ${id} ORDER BY s.position, s.id`;
+  // Independent of each other: one round trip instead of two.
+  const [exercises, sets] = await Promise.all([
+    sql<
+      {
+        id: string;
+        exercise_id: string;
+        name: string;
+        muscle_group: string;
+        image: string | null;
+        rest_seconds: number;
+        rest_custom: boolean;
+        grip_set: string | null;
+        is_cardio: boolean;
+        grip: string | null;
+        note: string | null;
+        position: number;
+      }[]
+    >`
+      SELECT we.id, we.exercise_id, e.name, e.muscle_group, e.image, e.rest_seconds, e.rest_custom,
+             e.grip_set, e.is_cardio, we.grip, we.note, we.position
+      FROM workout_exercise we JOIN exercise e ON e.id = we.exercise_id
+      WHERE we.workout_id = ${id} ORDER BY we.position, we.id`,
+    sql<
+      {
+        id: string;
+        workout_exercise_id: string;
+        position: number;
+        set_type: string;
+        weight_kg: number | null;
+        reps: number | null;
+        speed_kmh: number | null;
+        incline_pct: number | null;
+        completed: boolean;
+        auto_fill: number;
+      }[]
+    >`
+      SELECT s.id, s.workout_exercise_id, s.position, s.set_type, s.weight_kg, s.reps, s.speed_kmh,
+             s.incline_pct, s.completed, s.auto_fill
+      FROM workout_set s JOIN workout_exercise we ON we.id = s.workout_exercise_id
+      WHERE we.workout_id = ${id} ORDER BY s.position, s.id`,
+  ]);
 
-  const before = { date: w.date, startedAt: w.started_at.toISOString(), excludeWorkoutId: id };
-  // One lookup per distinct (exercise, grip), shared by duplicates of the same exercise.
-  const previous = new Map<string, Promise<SetValuesJson[]>>();
-  const previousFor = (exerciseId: string, grip: string | null) => {
-    const key = `${exerciseId}|${grip}`;
-    if (!previous.has(key)) previous.set(key, previousSets(sql, uid, Number(exerciseId), grip, before));
-    return previous.get(key)!;
-  };
+  // One query for every distinct (exercise, grip); duplicates of the same exercise share the result.
+  const pairs = [...new Map(exercises.map((e) => [previousKey(Number(e.exercise_id), e.grip), e])).values()].map((e) => ({
+    exerciseId: Number(e.exercise_id),
+    grip: e.grip,
+  }));
+  const previous = await previousSetsMany(sql, uid, pairs, {
+    date: w.date,
+    startedAt: w.started_at.toISOString(),
+    excludeWorkoutId: id,
+  });
 
   return {
     id: w.id,
@@ -127,36 +132,34 @@ async function loadWorkout(sql: Sql, uid: number, id: string) {
     rating: w.rating,
     feelings: w.feelings,
     templateId: w.template_id,
-    exercises: await Promise.all(
-      exercises.map(async (e) => ({
-        id: e.id,
-        exerciseId: Number(e.exercise_id),
-        name: e.name,
-        muscleGroup: e.muscle_group,
-        image: e.image,
-        restSeconds: e.rest_seconds,
-        restCustom: +e.rest_custom,
-        gripSet: e.grip_set,
-        isCardio: +e.is_cardio,
-        grip: e.grip,
-        note: e.note,
-        position: e.position,
-        sets: sets
-          .filter((s) => s.workout_exercise_id === e.id)
-          .map((s) => ({
-            id: s.id,
-            position: s.position,
-            setType: s.set_type,
-            weightKg: s.weight_kg,
-            reps: s.reps,
-            speedKmh: s.speed_kmh,
-            inclinePct: s.incline_pct,
-            completed: +s.completed,
-            autoFill: s.auto_fill,
-          })),
-        previous: await previousFor(e.exercise_id, e.grip),
-      })),
-    ),
+    exercises: exercises.map((e) => ({
+      id: e.id,
+      exerciseId: Number(e.exercise_id),
+      name: e.name,
+      muscleGroup: e.muscle_group,
+      image: e.image,
+      restSeconds: e.rest_seconds,
+      restCustom: +e.rest_custom,
+      gripSet: e.grip_set,
+      isCardio: +e.is_cardio,
+      grip: e.grip,
+      note: e.note,
+      position: e.position,
+      sets: sets
+        .filter((s) => s.workout_exercise_id === e.id)
+        .map((s) => ({
+          id: s.id,
+          position: s.position,
+          setType: s.set_type,
+          weightKg: s.weight_kg,
+          reps: s.reps,
+          speedKmh: s.speed_kmh,
+          inclinePct: s.incline_pct,
+          completed: +s.completed,
+          autoFill: s.auto_fill,
+        })),
+      previous: previous.get(previousKey(Number(e.exercise_id), e.grip)) ?? [],
+    })),
   };
 }
 
