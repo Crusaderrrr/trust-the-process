@@ -6,7 +6,8 @@ export type Sql = postgres.Sql;
 export type Tx = postgres.TransactionSql;
 
 export function connect(url: string, options: postgres.Options<Record<string, never>> = {}): Sql {
-  return postgres(url, { onnotice: () => {}, ...options });
+  // Neon suspends idle compute after 5 min and kills open sockets; recycle ours sooner so a wake-up never hits a dead one.
+  return postgres(url, { onnotice: () => {}, idle_timeout: 20, max_lifetime: 60 * 30, ...options });
 }
 
 // Resolves to <repo>/server/migrations from both server/ (tsx, tests) and dist-server/ (compiled).
