@@ -17,7 +17,7 @@ export type Equipment = (typeof EQUIPMENT)[number];
 /** Which grips an exercise offers: lat pulldown / rows vs triceps cable attachments. */
 export const GRIP_SETS = {
   back: ['wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal'],
-  triceps: ['rope', 'v_bar', 'straight_bar'],
+  triceps: ['rope', 'v_bar', 'straight_bar', 'single_hand'],
 } as const;
 export type GripSet = keyof typeof GRIP_SETS;
 export type Grip = (typeof GRIP_SETS)[GripSet][number];
@@ -36,6 +36,7 @@ export const GRIP_NAMES: Record<Grip, string> = {
   rope: 'Rope',
   v_bar: 'V-bar',
   straight_bar: 'Straight bar',
+  single_hand: 'Single hand',
 };
 
 export const label = (s: string) => (s === 'full_body' ? 'Full body' : s[0]!.toUpperCase() + s.slice(1));

@@ -32,7 +32,7 @@ const UPPER: Session = {
     lift('Lat Pulldown', 45, 0.5, ['wide', 'normal', 'narrow']),
     lift('Incline Dumbbell Press', 18, 0.25),
     lift('Seated Cable Row', 45, 0.5, ['parallel_normal', 'parallel_wide']),
-    lift('Triceps Pushdown', 20, 0.25, ['rope', 'v_bar', 'straight_bar']),
+    lift('Triceps Pushdown', 20, 0.25, ['rope', 'v_bar', 'straight_bar', 'single_hand']),
     lift('Barbell Curl', 25, 0.25),
   ],
 };

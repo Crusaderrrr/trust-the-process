@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import ExerciseThumb from '../../components/ExerciseThumb';
+import GripIcon from '../../components/GripIcon';
 import Icon, { type IconName } from '../../components/Icon';
 import Sheet from '../../components/Sheet';
 import { btn, card } from '../../components/ui';
@@ -98,9 +99,34 @@ export default function ExerciseCard({
       {(withRest || we.grip) && (
         <div className="mt-2 flex flex-wrap gap-2">
           {we.grip && (
-            <Pill icon="grip" onClick={() => setSheet('grip')}>
-              {GRIP_NAMES[we.grip]} grip
-            </Pill>
+            <div className="relative">
+              <Pill icon="grip" onClick={() => setSheet(sheet === 'grip' ? null : 'grip')}>
+                {GRIP_NAMES[we.grip]} grip
+              </Pill>
+              {sheet === 'grip' && (
+                <>
+                  {/* Invisible full-screen layer: a tap anywhere else closes the dropdown. */}
+                  <button className="fixed inset-0 z-10 cursor-default" onClick={close} aria-label="Close grip list" />
+                  <div className="absolute left-0 top-full z-20 mt-1 min-w-48 overflow-hidden rounded-xl bg-neutral-800 py-1 shadow-xl ring-1 ring-neutral-700">
+                    {/* a doc cached before grip sets existed has no gripSet; its grips were all back grips */}
+                    {GRIP_SETS[we.gripSet ?? 'back'].map((g) => (
+                      <button
+                        key={g}
+                        className={`flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-neutral-700 ${g === we.grip ? 'text-green-500' : 'text-neutral-100'}`}
+                        onClick={() => {
+                          void setGrip(workoutId, we.id, g);
+                          close();
+                        }}
+                      >
+                        <GripIcon grip={g} />
+                        <span className="flex-1">{GRIP_NAMES[g]}</span>
+                        {g === we.grip && <Icon name="check" className="h-5 w-5" />}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           )}
           {withRest && (
             <Pill icon="timer" onClick={() => setSheet('rest')}>
@@ -175,27 +201,6 @@ export default function ExerciseCard({
               <Icon name="delete" className="h-5 w-5" />
               Delete set
             </button>
-          </div>
-        </Sheet>
-      )}
-
-      {sheet === 'grip' && (
-        <Sheet title="Grip" onClose={close}>
-          <div className="flex flex-col gap-2 pb-2">
-            {/* a doc cached before grip sets existed has no gripSet; its grips were all back grips */}
-            {GRIP_SETS[we.gripSet ?? 'back'].map((g) => (
-              <button
-                key={g}
-                className={`${btn.secondary} justify-between ${g === we.grip ? 'ring-2 ring-green-500 ring-inset' : ''}`}
-                onClick={() => {
-                  void setGrip(workoutId, we.id, g);
-                  close();
-                }}
-              >
-                {GRIP_NAMES[g]}
-                {g === we.grip && <Icon name="check" className="h-5 w-5 text-green-500" />}
-              </button>
-            ))}
           </div>
         </Sheet>
       )}
