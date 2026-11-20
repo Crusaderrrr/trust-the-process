@@ -10,6 +10,7 @@ import { SKIP_REASON_NAMES, type SkipReason } from '../../repositories/skips';
 import { logPastWorkout } from '../../repositories/workouts';
 import { formatDate } from '../history/HistoryScreen';
 import SkipSheet from './SkipSheet';
+import YearView from './YearView';
 import { useDays, type DayInfo } from './useDays';
 
 export const STATUS_STYLE: Record<DayStatus, string> = {
@@ -54,7 +55,11 @@ function StatusMark({ status, size = 'h-4 w-4' }: { status: DayStatus; size?: st
 
 export default function CalendarScreen() {
   const now = new Date();
-  const [month, setMonth] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const [month, setMonth] = useState({
+    y: now.getFullYear(),
+    m: now.getMonth(),
+  });
+  const [view, setView] = useState<'month' | 'year'>('month');
   const [open, setOpen] = useState<string | null>(null);
   const touchX = useRef<number | null>(null);
   const navigate = useNavigate();
@@ -67,7 +72,12 @@ export default function CalendarScreen() {
   const t = today();
 
   const shift = (n: number) =>
-    setMonth(({ y, m }) => ({ y: m + n < 0 ? y - 1 : m + n > 11 ? y + 1 : y, m: (m + n + 12) % 12 }));
+    view === 'year'
+      ? setMonth(({ y, m }) => ({ y: y + n, m }))
+      : setMonth(({ y, m }) => ({
+          y: m + n < 0 ? y - 1 : m + n > 11 ? y + 1 : y,
+          m: (m + n + 12) % 12,
+        }));
 
   const count = (...s: DayStatus[]) => days?.filter((d) => s.includes(d.status)).length ?? 0;
   const reasons = new Map<SkipReason, number>();
@@ -85,82 +95,120 @@ export default function CalendarScreen() {
     >
       <PageHeader title="Calendar" />
 
-      <section className={`${card} p-3`}>
-        <div className="mb-3 flex items-center justify-between">
-          <button className={btn.icon} onClick={() => shift(-1)} aria-label="Previous month">
-            <Icon name="back" />
+      <div className="flex gap-2">
+        {(['month', 'year'] as const).map((v) => (
+          <button key={v} className={`${btn.chip(view === v)} flex-1 capitalize`} onClick={() => setView(v)}>
+            {v}
           </button>
-          <span className="font-semibold">
-            {new Date(month.y, month.m).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
-          </span>
-          <button className={btn.icon} onClick={() => shift(1)} aria-label="Next month">
-            <Icon name="chevronRight" />
-          </button>
-        </div>
-        <div className="grid grid-cols-7 gap-1.5 text-center">
-          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-            <span key={i} className="pb-1 text-[11px] font-semibold text-neutral-500">
-              {d}
-            </span>
-          ))}
-          {cells.map((date, i) => {
-            const d = date ? byDate.get(date) : undefined;
-            return date ? (
-              <button
-                key={date}
-                className={`relative aspect-square rounded-xl text-sm font-medium ${
-                  d ? (isMarked(d.status) ? MARKED_CELL[d.status] : STATUS_STYLE[d.status]) : ''
-                } ${date === t ? 'font-bold outline-2 outline-offset-1 outline-white' : ''}`}
-                // One logged workout: open it directly. Several: the sheet lets you pick.
-                onClick={() => (d?.workouts.length === 1 ? navigate(`/history/${d.workouts[0]!.id}`) : setOpen(date))}
-              >
-                {d?.mood && (
-                  <span
-                    className="absolute left-1/2 top-1 h-2 w-2 -translate-x-1/2 rounded-full"
-                    style={{ background: RATING_COLOR[d.mood] }}
-                  />
-                )}
-                {Number(date.slice(8))}
-                {d && isMarked(d.status) && (
-                  <span className="absolute bottom-1 right-1">
-                    <StatusMark status={d.status} size="h-3.5 w-3.5" />
-                  </span>
-                )}
-              </button>
-            ) : (
-              <span key={`pad${i}`} />
-            );
-          })}
-        </div>
-        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-neutral-400">
-          {LEGEND.map((s) => (
-            <span key={s} className="flex items-center gap-1">
-              <StatusMark status={s} />
-              {STATUS_NAME[s]}
-            </span>
-          ))}
-        </div>
-      </section>
+        ))}
+      </div>
 
-      <section className="flex flex-col gap-2">
-        <SectionTitle>This month</SectionTitle>
-        <div className={`${card} p-4`}>
-          <div className="grid grid-cols-2 gap-2 text-center">
-            <Count label="Done" value={count('done')} accent="text-green-500" />
-            <Count label="Skipped" value={count('skipped')} accent="text-amber-300" />
+      {view === 'year' && (
+        <>
+          <div className="flex items-center justify-between">
+            <button className={btn.icon} onClick={() => shift(-1)} aria-label="Previous year">
+              <Icon name="back" />
+            </button>
+            <span className="font-semibold">{month.y}</span>
+            <button className={btn.icon} onClick={() => shift(1)} aria-label="Next year">
+              <Icon name="chevronRight" />
+            </button>
           </div>
-          {reasons.size > 0 && (
-            <ul className="mt-4 flex flex-col gap-1.5 border-t border-white/[0.06] pt-3 text-sm text-neutral-300">
-              {[...reasons].map(([r, n]) => (
-                <li key={r} className="flex justify-between">
-                  <span>{SKIP_REASON_NAMES[r]}</span>
-                  <span className="text-neutral-400">{n}</span>
-                </li>
+          <YearView
+            year={month.y}
+            onPickMonth={(m) => {
+              setMonth({ y: month.y, m });
+              setView('month');
+            }}
+          />
+        </>
+      )}
+
+      {view === 'month' && (
+        <>
+          <section className={`${card} p-3`}>
+            <div className="mb-3 flex items-center justify-between">
+              <button className={btn.icon} onClick={() => shift(-1)} aria-label="Previous month">
+                <Icon name="back" />
+              </button>
+              <span className="font-semibold">
+                {new Date(month.y, month.m).toLocaleDateString('en-GB', {
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
+              <button className={btn.icon} onClick={() => shift(1)} aria-label="Next month">
+                <Icon name="chevronRight" />
+              </button>
+            </div>
+            <div className="grid grid-cols-7 gap-1.5 text-center">
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+                <span key={i} className="pb-1 text-[11px] font-semibold text-neutral-500">
+                  {d}
+                </span>
               ))}
-            </ul>
-          )}
-        </div>
-      </section>
+              {cells.map((date, i) => {
+                const d = date ? byDate.get(date) : undefined;
+                return date ? (
+                  <button
+                    key={date}
+                    className={`relative aspect-square rounded-xl text-sm font-medium ${
+                      d ? (isMarked(d.status) ? MARKED_CELL[d.status] : STATUS_STYLE[d.status]) : ''
+                    } ${date === t ? 'font-bold outline-2 outline-offset-1 outline-white' : ''}`}
+                    // One logged workout: open it directly. Several: the sheet lets you pick.
+                    onClick={() =>
+                      d?.workouts.length === 1 ? navigate(`/history/${d.workouts[0]!.id}`) : setOpen(date)
+                    }
+                  >
+                    {d?.mood && (
+                      <span
+                        className="absolute left-1/2 top-1 h-2 w-2 -translate-x-1/2 rounded-full"
+                        style={{ background: RATING_COLOR[d.mood] }}
+                      />
+                    )}
+                    {Number(date.slice(8))}
+                    {d && isMarked(d.status) && (
+                      <span className="absolute bottom-1 right-1">
+                        <StatusMark status={d.status} size="h-3.5 w-3.5" />
+                      </span>
+                    )}
+                  </button>
+                ) : (
+                  <span key={`pad${i}`} />
+                );
+              })}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-neutral-400">
+              {LEGEND.map((s) => (
+                <span key={s} className="flex items-center gap-1">
+                  <StatusMark status={s} />
+                  {STATUS_NAME[s]}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <SectionTitle>This month</SectionTitle>
+            <div className={`${card} p-4`}>
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <Count label="Done" value={count('done')} accent="text-green-500" />
+                <Count label="Skipped" value={count('skipped')} accent="text-amber-300" />
+              </div>
+              {reasons.size > 0 && (
+                <ul className="mt-4 flex flex-col gap-1.5 border-t border-white/[0.06] pt-3 text-sm text-neutral-300">
+                  {[...reasons].map(([r, n]) => (
+                    <li key={r} className="flex justify-between">
+                      <span>{SKIP_REASON_NAMES[r]}</span>
+                      <span className="text-neutral-400">{n}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        </>
+      )}
 
       {open && byDate.get(open) && <DaySheet day={byDate.get(open)!} onClose={() => setOpen(null)} />}
     </div>
