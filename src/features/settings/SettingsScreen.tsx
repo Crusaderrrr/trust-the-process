@@ -27,7 +27,8 @@ export default function SettingsScreen() {
       );
       setImportMsg(
         `Imported ${r.workouts} workouts.` +
-          (r.newExercises.length ? ` Created ${r.newExercises.length} new exercises.` : ''),
+          (r.newExercises.length ? ` Created ${r.newExercises.length} new exercises.` : '') +
+          (r.removed ? ` Removed ${r.removed} duplicate exercises.` : ''),
       );
     } catch (e) {
       setImportMsg(`Import failed: ${e instanceof Error ? e.message : e}`);

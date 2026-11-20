@@ -1,6 +1,6 @@
 import { toLocalDate } from './dates';
 import type { Feeling, Rating } from './checkIn';
-import type { Equipment, Grip, GripSet, MuscleGroup } from './exercises';
+import { defaultGrip, GRIP_SETS, type Equipment, type Grip, type GripSet, type MuscleGroup } from './exercises';
 import type { SetType } from './sets';
 
 // Hevy's "Export workout data" CSV: one row per set, columns
@@ -42,6 +42,51 @@ export type ImportWorkout = {
   notes: string | null;
   exercises: ImportExercise[];
 };
+
+/**
+ * Hevy's title (lower case) → the library exercise it is the same as, plus the grip that matches
+ * Hevy's variant. Hevy splits e.g. triceps pushdowns into several exercises where we have one with
+ * grips. Anything not listed is created under its Hevy name. Edit freely: importing again is safe
+ * (workout ids derive from the file), so the next import re-files the history under the new target.
+ */
+export const HEVY_ALIASES: Record<string, { name: string; grip?: Grip }> = {
+  'bench press (barbell)': { name: 'Barbell Bench Press' },
+  'bench press (dumbbell)': { name: 'Dumbbell Bench Press' },
+  'bicep curl (barbell)': { name: 'Barbell Curl' },
+  'bicep curl (dumbbell)': { name: 'Dumbbell Curl' },
+  'hammer curl (dumbbell)': { name: 'Hammer Curl' },
+  'butterfly (pec deck)': { name: 'Butterfly' },
+  'chest fly (machine)': { name: 'Butterfly' },
+  'chest press (machine)': { name: 'Chest Press Machine' },
+  'lat pulldown (cable)': { name: 'Lat Pulldown', grip: 'normal' },
+  'seated cable row - bar wide grip': { name: 'Seated Cable Row', grip: 'wide' },
+  'seated cable row - v grip (cable)': { name: 'Seated Cable Row', grip: 'parallel_normal' },
+  't bar row': { name: 'T-Bar Row' },
+  'lateral raise (dumbbell)': { name: 'Lateral Raise' },
+  'lateral raise (cable)': { name: 'Cable Lateral Raise' },
+  'leg extension (machine)': { name: 'Leg Extension' },
+  'leg press (machine)': { name: 'Leg Press' },
+  'lying leg curl (machine)': { name: 'Lying Leg Curl' },
+  'seated leg curl (machine)': { name: 'Seated Leg Curl' },
+  'hip abduction (machine)': { name: 'Hip Abduction Machine' },
+  'standing calf raise (machine)': { name: 'Standing Calf Raise' },
+  'squat (barbell)': { name: 'Back Squat' },
+  'overhead triceps extension (cable)': { name: 'Overhead Triceps Extension' },
+  'triceps pushdown': { name: 'Triceps Pushdown', grip: 'v_bar' },
+  'triceps rope pushdown': { name: 'Triceps Pushdown', grip: 'rope' },
+  'triceps pressdown': { name: 'Triceps Pushdown', grip: 'straight_bar' },
+};
+
+/** Hevy titles (lower case) that are filed under another name, i.e. the ones an older import may have created. */
+export const HEVY_RENAMED = Object.entries(HEVY_ALIASES)
+  .filter(([hevy, a]) => hevy !== a.name.toLowerCase())
+  .map(([hevy]) => hevy);
+
+/** Grip to log: the wanted one if the exercise offers it, else the exercise's default, else none. */
+export function importGrip(gripSet: GripSet | null, wanted: Grip | null | undefined): Grip | null {
+  if (!gripSet) return null;
+  return wanted && (GRIP_SETS[gripSet] as readonly Grip[]).includes(wanted) ? wanted : defaultGrip(gripSet);
+}
 
 /** RFC 4180: quoted fields may hold commas, doubled quotes and newlines. */
 export function parseCsv(text: string): string[][] {
@@ -147,13 +192,17 @@ export function parseHevy(text: string): ImportWorkout[] {
     .map(({ w, sets }) => ({
       ...w,
       exercises: w.exercises
-        .map((e) => ({
-          ...e,
-          sets: sets
-            .get(e.name)!
-            .sort((a, b) => a.index - b.index)
-            .map((s) => s.set),
-        }))
+        .map((e) => {
+          const alias = HEVY_ALIASES[e.name.toLowerCase()];
+          return {
+            ...e,
+            ...(alias && { name: alias.name, grip: alias.grip }),
+            sets: sets
+              .get(e.name)!
+              .sort((a, b) => a.index - b.index)
+              .map((s) => s.set),
+          };
+        })
         .filter((e) => e.sets.length > 0),
     }))
     .filter((w) => w.exercises.length > 0);

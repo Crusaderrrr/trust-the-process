@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { guessExercise, parseCsv, parseHevy, parseHevyDate } from './hevyImport';
+import { guessExercise, HEVY_ALIASES, HEVY_RENAMED, importGrip, parseCsv, parseHevy, parseHevyDate } from './hevyImport';
 
 const HEAD =
   '"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"\n';
@@ -28,7 +28,7 @@ describe('hevy import', () => {
     );
     expect(rest).toEqual([]);
     expect(w).toMatchObject({ title: 'Leg day 💪', date: '2026-11-17', notes: 'go' });
-    expect(w!.exercises.map((e) => e.name)).toEqual(['Squat (Barbell)', 'Treadmill']); // empty Plank dropped
+    expect(w!.exercises.map((e) => e.name)).toEqual(['Back Squat', 'Treadmill']); // empty Plank dropped
     expect(w!.exercises[0]!.sets.map((s) => [s.setType, s.weightKg, s.reps])).toEqual([
       ['warmup', 20, 12], // sorted by set_index
       ['drop', 50, 8],
@@ -38,6 +38,39 @@ describe('hevy import', () => {
 
   it('accepts a BOM-prefixed file', () => {
     expect(parseHevy(`${String.fromCharCode(0xfeff)}${HEAD}${L}"Squat",,"",0,"normal",50,8,,,\n`)).toHaveLength(1);
+  });
+
+  it('files Hevy variants under our exercises, with the matching grip', () => {
+    const [w] = parseHevy(
+      HEAD +
+        `${L}"Triceps Rope Pushdown",,"",0,"normal",20,10,,,
+` +
+        `${L}"Triceps Pressdown",,"",0,"normal",25,10,,,
+` +
+        `${L}"Butterfly (Pec Deck)",,"",0,"normal",40,10,,,
+` +
+        `${L}"Chest Fly (Machine)",,"",0,"normal",40,10,,,
+`,
+    );
+    expect(w!.exercises.map((e) => [e.name, e.grip])).toEqual([
+      ['Triceps Pushdown', 'rope'],
+      ['Triceps Pushdown', 'straight_bar'],
+      ['Butterfly', undefined],
+      ['Butterfly', undefined],
+    ]);
+  });
+
+  it('picks a grip the exercise offers, else its default', () => {
+    expect(importGrip('back', 'wide')).toBe('wide');
+    expect(importGrip('back', undefined)).toBe('normal');
+    expect(importGrip('triceps', 'wide')).toBe('rope'); // not a triceps grip
+    expect(importGrip(null, 'wide')).toBeNull();
+  });
+
+  it('only lists renames, and aliases are keyed in lower case', () => {
+    expect(HEVY_RENAMED).toContain('butterfly (pec deck)');
+    expect(HEVY_RENAMED).not.toContain('triceps pushdown'); // keeps its own name, only gains a grip
+    expect(Object.keys(HEVY_ALIASES).every((k) => k === k.toLowerCase())).toBe(true);
   });
 
   it('rejects other CSVs', () => {

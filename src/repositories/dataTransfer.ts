@@ -1,7 +1,7 @@
 import { api } from '../api/client';
 import { buildExport, parseExport } from '../domain/dataExport';
 import type { Exercise } from '../domain/exercises';
-import { guessExercise, parseHevy, type ImportWorkout } from '../domain/hevyImport';
+import { guessExercise, HEVY_RENAMED, importGrip, parseHevy, type ImportWorkout } from '../domain/hevyImport';
 import type { WorkoutDetail } from '../domain/workoutDoc';
 import { unarchiveExercise } from './exercises';
 import type { HistoryItem } from './workouts';
@@ -27,9 +27,23 @@ async function workoutId(key: string): Promise<string> {
 }
 
 /** A TTP JSON export or a Hevy CSV, told apart by the file name. */
-export function importFile(file: { name: string; text: string }, onProgress: (done: number, total: number) => void) {
-  const workouts = file.name.toLowerCase().endsWith('.json') ? parseExport(file.text) : parseHevy(file.text);
-  return importWorkouts(workouts, onProgress);
+export async function importFile(file: { name: string; text: string }, onProgress: (done: number, total: number) => void) {
+  const json = file.name.toLowerCase().endsWith('.json');
+  const result = await importWorkouts(json ? parseExport(file.text) : parseHevy(file.text), onProgress);
+  return { ...result, removed: json ? 0 : await removeStaleHevyExercises() };
+}
+
+/**
+ * An earlier import filed history under Hevy's own names ("Butterfly (Pec Deck)"). Now that those
+ * are re-filed under our exercises, the leftovers are empty: delete them (the server archives any
+ * that still have history, e.g. logged by hand).
+ */
+async function removeStaleHevyExercises(): Promise<number> {
+  const stale = (await api<Exercise[]>('GET', '/exercises')).filter(
+    (e) => e.isCustom && HEVY_RENAMED.includes(e.name.toLowerCase()),
+  );
+  for (const e of stale) await api('DELETE', `/exercises/${e.id}`);
+  return stale.length;
 }
 
 /**
@@ -46,11 +60,11 @@ async function importWorkouts(
   }
 
   const newExercises: string[] = [];
-  const resolve = async (name: string, meta: ImportWorkout['exercises'][number]['meta']): Promise<number> => {
+  const resolve = async (name: string, meta: ImportWorkout['exercises'][number]['meta']): Promise<Exercise> => {
     const known = byName.get(name.toLowerCase());
     if (known) {
       if (known.archived) await unarchiveExercise(known.id);
-      return known.id;
+      return known;
     }
     const created = await api<Exercise>('POST', '/exercises', {
       name: name.slice(0, 80),
@@ -59,18 +73,20 @@ async function importWorkouts(
     });
     byName.set(name.toLowerCase(), created);
     newExercises.push(name);
-    return created.id;
+    return created;
   };
 
   let done = 0;
   for (const w of workouts) {
     const exercises = [];
     for (const [position, e] of w.exercises.entries()) {
+      const exercise = await resolve(e.name, e.meta);
       exercises.push({
         id: crypto.randomUUID(),
-        exerciseId: await resolve(e.name, e.meta),
+        exerciseId: exercise.id,
         position,
-        grip: e.grip ?? null,
+        // Hevy has no grips: a grip exercise gets the variant its Hevy name implies, else the default.
+        grip: e.grip === null ? null : importGrip(exercise.gripSet, e.grip),
         note: e.note,
         sets: e.sets.map((s, i) => ({
           id: crypto.randomUUID(),
