@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 import {
   Bar,
   BarChart,
@@ -41,13 +41,31 @@ export default function TonnageChart({
   const picked = useDbQuery(getTemplateColors, [], { key: "template-colors" });
   const selected = by === "workout" ? templateId : null;
   const data = tonnage(workouts, by, rangeStart(range, today()), selected);
-  // The tapped bar's numbers slide out from under the chart. `active` outlives `open` so the
-  // text doesn't vanish mid-collapse.
-  const [active, setActive] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
-  const point = data.find((d) => d.date === active);
-  const show = open && !!point;
+  // The bar under the finger (tap or drag). Tied to the current view so a stale date can't reappear
+  // after switching Week/Workout, the range or the template.
+  const view = `${by}|${range}|${selected}`;
+  const [active, setActive] = useState<{ view: string; date: string } | null>(
+    null,
+  );
+  const point =
+    active?.view === view
+      ? data.find((d) => d.date === active.date)
+      : undefined;
   const pointTemplate = TEMPLATES.find((t) => t.id === point?.templateId);
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  /** The bar under a pointer: the plot area (the grid) is split into one equal band per bar. */
+  function pick(e: PointerEvent) {
+    const plot = chartRef.current
+      ?.querySelector(".recharts-cartesian-grid")
+      ?.getBoundingClientRect();
+    if (!plot || plot.width === 0 || data.length === 0) return;
+    const i = Math.floor(((e.clientX - plot.left) / plot.width) * data.length);
+    const d = data[Math.min(data.length - 1, Math.max(0, i))]!;
+    setActive((a) =>
+      a?.view === view && a.date === d.date ? a : { view, date: d.date },
+    );
+  }
 
   return (
     <section className={`${card} flex flex-col gap-3 p-3`}>
@@ -105,86 +123,80 @@ export default function TonnageChart({
           ))}
         </div>
       )}
-      <div>
+      <div className="relative">
         {data.length === 0 ? (
           <div className="flex h-44 items-center justify-center text-sm text-neutral-500">
             No workouts in this range
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart
-              data={data}
-              margin={{ top: 8, right: 8, bottom: 0, left: -10 }}
-            >
-              <CartesianGrid stroke="#262626" vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickFormatter={by === "week" ? weekRange : shortDate}
-                tick={{ fill: "#737373", fontSize: 11 }}
-                stroke="#262626"
-              />
-              <YAxis
-                tick={{ fill: "#737373", fontSize: 11 }}
-                stroke="#262626"
-              />
-              <Bar
-                dataKey="volume"
-                radius={[4, 4, 0, 0]}
-                cursor="pointer"
-                onClick={(_, i) => {
-                  const date = data[i]?.date;
-                  if (!date) return;
-                  setOpen(!(show && date === active));
-                  setActive(date);
-                }}
+          // pan-y: a horizontal drag scrubs across the bars, a vertical one still scrolls the page.
+          <div
+            ref={chartRef}
+            className="touch-pan-y select-none"
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              pick(e);
+            }}
+            onPointerMove={(e) =>
+              e.currentTarget.hasPointerCapture(e.pointerId) && pick(e)
+            }
+          >
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart
+                data={data}
+                margin={{ top: 8, right: 8, bottom: 0, left: -10 }}
               >
-                {data.map((d) => (
-                  <Cell
-                    key={d.date}
-                    fill={templateColor(d.templateId, picked)}
-                    fillOpacity={show && d.date !== active ? 0.35 : 1}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-        <div
-          aria-live="polite"
-          aria-hidden={!show}
-          className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${show ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-        >
-          <div className="overflow-hidden">
-            <div
-              className={`flex flex-col gap-0.5 pt-3 transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none ${show ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}
-            >
-              {point && (
-                <>
-                  <div className="flex items-center gap-1.5 text-xs text-neutral-400">
-                    {pointTemplate && (
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{
-                          background: templateColor(pointTemplate.id, picked),
-                        }}
-                      />
-                    )}
-                    {by === "week"
-                      ? weekRange(point.date)
-                      : shortDate(point.date)}
-                    {pointTemplate && ` · ${pointTemplate.name}`}
-                  </div>
-                  <div className="text-white">
-                    <span className="text-2xl font-semibold tabular-nums">
-                      {formatWeight(point.volume)}
-                    </span>{" "}
-                    <span className="text-sm text-neutral-400">kg</span>
-                  </div>
-                </>
-              )}
-            </div>
+                <CartesianGrid stroke="#262626" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={by === "week" ? weekRange : shortDate}
+                  tick={{ fill: "#737373", fontSize: 11 }}
+                  stroke="#262626"
+                />
+                <YAxis
+                  tick={{ fill: "#737373", fontSize: 11 }}
+                  stroke="#262626"
+                />
+                <Bar dataKey="volume" radius={[4, 4, 0, 0]}>
+                  {data.map((d) => (
+                    <Cell
+                      key={d.date}
+                      fill={templateColor(d.templateId, picked)}
+                      fillOpacity={point && d.date !== point.date ? 0.35 : 1}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        </div>
+        )}
+        {point && (
+          // Centered over the chart; a tap on it clears the selection.
+          <button
+            className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 rounded-xl bg-neutral-900/90 px-4 py-2 shadow-lg ring-1 ring-neutral-700"
+            onClick={() => setActive(null)}
+            aria-label="Clear selection"
+          >
+            <span className="flex items-center gap-1.5 text-xs text-neutral-400">
+              {pointTemplate && (
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{
+                    background: templateColor(pointTemplate.id, picked),
+                  }}
+                />
+              )}
+              {by === "week" ? weekRange(point.date) : shortDate(point.date)}
+              {pointTemplate && ` · ${pointTemplate.name}`}
+            </span>
+            <span className="text-white">
+              <span className="text-2xl font-semibold tabular-nums">
+                {formatWeight(point.volume)}
+              </span>{" "}
+              <span className="text-sm text-neutral-400">kg</span>
+            </span>
+          </button>
+        )}
       </div>
       <div className="flex justify-center gap-2">
         {(Object.keys(RANGES) as Range[]).map((r) => (
