@@ -203,3 +203,15 @@ Live URL: https://crusaderrrr.github.io/
 - [x] JSON export/import of finished workouts (`domain/dataExport.ts`, Settings → Data); the same import button reads TTP JSON or Hevy CSV by file extension
 - [ ] Render + Neon migration: plan and runbook in `MIGRATE-RENDER.md`. Render service `ttp` (Frankfurt, Free) is live against an empty Neon DB; data restore, `clientIp` check and phone install still to do
 - [x] Speed pass: keyed stale-while-revalidate in `useDbQuery`, exercise library opens from the device copy, workout PUT no longer triggers refetches, one query for a workout's Previous sets, removed the unused SQLite layer
+
+## Live PR badge (2026-11-20)
+- [x] A completed working set that beats the exercise's best top weight or e1RM (earlier sets of the same workout count) gets an amber "PR" tag: `setRecordFlags` in `domain/progress.ts` (tested), history via `sessionsByExercise`, shown in `SetRow`. Live workouts only; no badge for a first-ever exercise, cardio, or while offline
+- [ ] Not clicked through in the browser yet. Not done: haptics, whole-workout tonnage record at finish
+
+## Feedback round 9 (2026-11-20)
+- [x] Hevy import files variants under our exercises with the matching grip (`HEVY_ALIASES`), re-import replaces and removes old duplicates
+- [x] Single-hand triceps grip (migration 010), grip icons, grip selector is a dropdown
+- [x] Tonnage chart: drag across bars to select, date + tonnage centred over the chart
+- [x] Calendar: Month / Year tabs, year view is twelve small grids (workout and skipped days share a colour)
+- [x] Glass-style tab bar; icons on the Export / Import buttons
+- [ ] Not clicked through in a browser yet; 010 must run on the deployed DB
