@@ -75,6 +75,30 @@ export function prCountByWorkout(sessionsPerExercise: Session[][]): Map<string, 
   return counts;
 }
 
+/**
+ * Live PR flags for one exercise's sets in the workout being logged: a completed working set is a
+ * PR when its weight or e1RM beats everything earlier, including earlier sets of this workout (so
+ * only the set that raises the bar is flagged). No flags for an exercise never logged before.
+ */
+export function setRecordFlags(
+  history: Session[],
+  sets: { weightKg: number | null; reps: number | null; setType: SetType; completed: number }[],
+): boolean[] {
+  const past = history.map(sessionStats).filter((s) => s !== null);
+  if (past.length === 0) return sets.map(() => false);
+  const pr = personalRecords(past);
+  let topWeight = pr.topWeight?.value ?? 0;
+  let best = pr.e1rm?.value ?? 0;
+  return sets.map((s) => {
+    if (!s.completed || s.setType === 'warmup' || !s.weightKg || !s.reps) return false;
+    const est = e1rm(s.weightKg, s.reps) ?? 0;
+    const isPr = s.weightKg > topWeight || est > best;
+    topWeight = Math.max(topWeight, s.weightKg);
+    best = Math.max(best, est);
+    return isPr;
+  });
+}
+
 /** Chart time ranges, in days back from today. */
 export const RANGES = { '1M': 30, '3M': 91, '1Y': 365, '3Y': 1095 } as const;
 export type Range = keyof typeof RANGES;

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { e1rm, personalRecords, prCountByWorkout, rangeStart, sessionStats, tonnage, type Session } from './progress';
+import {
+  e1rm,
+  personalRecords,
+  prCountByWorkout,
+  rangeStart,
+  sessionStats,
+  setRecordFlags,
+  tonnage,
+  type Session,
+} from './progress';
 
 const session = (workoutId: string, date: string, sets: [number, number, string?][]): Session => ({
   workoutId,
@@ -16,6 +25,27 @@ describe('progress', () => {
     expect(e1rm(100, 3)).toBeCloseTo(110);
     expect(e1rm(60, 12)).toBeCloseTo(84);
     expect(e1rm(60, 13)).toBeNull();
+  });
+
+  it('flags live PRs by weight or e1RM, only for the set that raises the bar', () => {
+    const history = [session('1', '2026-01-01', [[100, 5]])]; // best: 100 kg, e1RM 116.7
+    const set = (weightKg: number, reps: number, completed = 1, setType: 'normal' | 'warmup' = 'normal') => ({
+      weightKg,
+      reps,
+      setType,
+      completed,
+    });
+    expect(
+      setRecordFlags(history, [
+        set(60, 10, 1, 'warmup'), // warm-ups never count
+        set(100, 5), // equal, not a PR
+        set(100, 6), // more reps at the same weight → e1RM
+        set(100, 6), // ties the new best
+        set(105, 1), // heavier
+        set(110, 5, 0), // not completed
+      ]),
+    ).toEqual([false, false, true, false, true, false]);
+    expect(setRecordFlags([], [set(100, 5)])).toEqual([false]); // first time ever: no PRs
   });
 
   it('computes session stats excluding warm-ups', () => {

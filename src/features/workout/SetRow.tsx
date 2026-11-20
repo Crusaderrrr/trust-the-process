@@ -40,6 +40,7 @@ export default function SetRow({
   previous,
   cardio,
   shaking,
+  pr,
   onLabel,
   onToggle,
 }: {
@@ -49,6 +50,8 @@ export default function SetRow({
   previous: SetValues | undefined;
   cardio: boolean;
   shaking: boolean;
+  /** This completed set beat the exercise's best weight or estimated 1RM. */
+  pr: boolean;
   onLabel: () => void;
   onToggle: () => void;
 }) {
@@ -85,6 +88,11 @@ export default function SetRow({
         }}
         onTouchEnd={() => (touchX.current = null)}
       >
+        {pr && (
+          <span className="pointer-events-none absolute left-0 top-0 z-10 rounded-br-lg rounded-tl-xl bg-amber-500 px-1 text-[9px] font-extrabold leading-4 text-neutral-950">
+            PR
+          </span>
+        )}
         <button className={`h-10 rounded-xl bg-neutral-800 font-bold ${SET_TYPE_COLOR[set.setType]}`} onClick={onLabel}>
           {label}
         </button>

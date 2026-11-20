@@ -5,8 +5,10 @@ import Icon, { type IconName } from '../../components/Icon';
 import Sheet from '../../components/Sheet';
 import { btn, card } from '../../components/ui';
 import { completeValues, SET_TYPE_NAMES, SET_TYPES, setLabels, type SetType } from '../../domain/sets';
+import { setRecordFlags } from '../../domain/progress';
 import { formatRest, REST_OPTIONS } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
+import { sessionsByExercise } from '../../repositories/progress';
 import {
   getDefaultRest,
   GRIP_NAMES,
@@ -47,6 +49,15 @@ export default function ExerciseCard({
   const [typeFor, setTypeFor] = useState<WorkoutSet | null>(null);
   const [shaking, setShaking] = useState<string | null>(null);
 
+  // PR badges only in a live workout (editing history would compare a workout with itself) and not for cardio.
+  const live = withRest && !we.isCardio;
+  const history = useDbQuery(
+    async () => (live ? ((await sessionsByExercise({ exerciseId: we.exerciseId })).get(we.exerciseId) ?? []) : []),
+    [live, we.exerciseId],
+    { key: 'exerciseSessions', refetch: false },
+  );
+  // Offline or still loading: no history, no badges.
+  const prs = history ? setRecordFlags(history, we.sets) : [];
   const labels = setLabels(we.sets.map((s) => s.setType));
   const close = () => setSheet(null);
 
@@ -127,6 +138,7 @@ export default function ExerciseCard({
           previous={we.previous[i]}
           cardio={!!we.isCardio}
           shaking={shaking === s.id}
+          pr={!!prs[i]}
           onLabel={() => setTypeFor(s)}
           onToggle={() => toggle(s, i)}
         />
