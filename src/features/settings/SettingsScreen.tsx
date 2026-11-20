@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import Icon from '../../components/Icon';
 import Sheet from '../../components/Sheet';
 import { btn, card, PageHeader, Row, SectionTitle } from '../../components/ui';
 import { today } from '../../domain/dates';
@@ -100,10 +101,16 @@ export default function SettingsScreen() {
       <section className="flex flex-col gap-2">
         <SectionTitle>Data</SectionTitle>
         <button className={btn.secondary} disabled={importing} onClick={() => void runExport()}>
-          Export my workouts (JSON)
+          <Icon name="download" className="h-5 w-5 text-green-500" />
+          <span>
+            Export my workouts <span className="text-neutral-500">(JSON)</span>
+          </span>
         </button>
         <button className={btn.secondary} disabled={importing} onClick={() => fileInput.current?.click()}>
-          Import workouts (TTP JSON or Hevy CSV)
+          <Icon name="upload" className="h-5 w-5 text-green-500" />
+          <span>
+            Import workouts <span className="text-neutral-500">(TTP JSON or Hevy CSV)</span>
+          </span>
         </button>
         <input
           ref={fileInput}
