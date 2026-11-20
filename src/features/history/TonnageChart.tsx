@@ -5,7 +5,6 @@ import {
   Cell,
   CartesianGrid,
   ResponsiveContainer,
-  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -39,9 +38,16 @@ export default function TonnageChart({
   const [by, setBy] = useState<"workout" | "week">("week");
   // Templates only matter per workout; a week adds up every kind of workout.
   const [templateId, setTemplateId] = useState<string | null>(null);
-  const picked = useDbQuery(getTemplateColors, [], { key: 'template-colors' });
+  const picked = useDbQuery(getTemplateColors, [], { key: "template-colors" });
   const selected = by === "workout" ? templateId : null;
   const data = tonnage(workouts, by, rangeStart(range, today()), selected);
+  // The tapped bar's numbers slide out from under the chart. `active` outlives `open` so the
+  // text doesn't vanish mid-collapse.
+  const [active, setActive] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const point = data.find((d) => d.date === active);
+  const show = open && !!point;
+  const pointTemplate = TEMPLATES.find((t) => t.id === point?.templateId);
 
   return (
     <section className={`${card} flex flex-col gap-3 p-3`}>
@@ -99,52 +105,87 @@ export default function TonnageChart({
           ))}
         </div>
       )}
-      {data.length === 0 ? (
-        <div className="flex h-44 items-center justify-center text-sm text-neutral-500">
-          No workouts in this range
+      <div>
+        {data.length === 0 ? (
+          <div className="flex h-44 items-center justify-center text-sm text-neutral-500">
+            No workouts in this range
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart
+              data={data}
+              margin={{ top: 8, right: 8, bottom: 0, left: -10 }}
+            >
+              <CartesianGrid stroke="#262626" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickFormatter={by === "week" ? weekRange : shortDate}
+                tick={{ fill: "#737373", fontSize: 11 }}
+                stroke="#262626"
+              />
+              <YAxis
+                tick={{ fill: "#737373", fontSize: 11 }}
+                stroke="#262626"
+              />
+              <Bar
+                dataKey="volume"
+                radius={[4, 4, 0, 0]}
+                cursor="pointer"
+                onClick={(_, i) => {
+                  const date = data[i]?.date;
+                  if (!date) return;
+                  setOpen(!(show && date === active));
+                  setActive(date);
+                }}
+              >
+                {data.map((d) => (
+                  <Cell
+                    key={d.date}
+                    fill={templateColor(d.templateId, picked)}
+                    fillOpacity={show && d.date !== active ? 0.35 : 1}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+        <div
+          aria-live="polite"
+          aria-hidden={!show}
+          className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${show ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+        >
+          <div className="overflow-hidden">
+            <div
+              className={`flex flex-col gap-0.5 pt-3 transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none ${show ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}`}
+            >
+              {point && (
+                <>
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-400">
+                    {pointTemplate && (
+                      <span
+                        className="h-2.5 w-2.5 rounded-full"
+                        style={{
+                          background: templateColor(pointTemplate.id, picked),
+                        }}
+                      />
+                    )}
+                    {by === "week"
+                      ? weekRange(point.date)
+                      : shortDate(point.date)}
+                    {pointTemplate && ` · ${pointTemplate.name}`}
+                  </div>
+                  <div className="text-white">
+                    <span className="text-2xl font-semibold tabular-nums">
+                      {formatWeight(point.volume)}
+                    </span>{" "}
+                    <span className="text-sm text-neutral-400">kg</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-      ) : (
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart
-            data={data}
-            margin={{ top: 8, right: 8, bottom: 0, left: -10 }}
-          >
-            <CartesianGrid stroke="#262626" vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickFormatter={by === "week" ? weekRange : shortDate}
-              tick={{ fill: "#737373", fontSize: 11 }}
-              stroke="#262626"
-            />
-            <YAxis tick={{ fill: "#737373", fontSize: 11 }} stroke="#262626" />
-            <Tooltip
-              cursor={{ fill: "#ffffff10" }}
-              contentStyle={{
-                background: "#171717",
-                border: "1px solid #262626",
-                borderRadius: 12,
-              }}
-              labelFormatter={(d) =>
-                by === "week" ? weekRange(String(d)) : shortDate(String(d))
-              }
-              formatter={(v, _name, item) => {
-                const id = (
-                  item.payload as { templateId?: string | null } | undefined
-                )?.templateId;
-                return [
-                  `${formatWeight(Number(v))} kg`,
-                  TEMPLATES.find((t) => t.id === id)?.name ?? "Tonnage",
-                ];
-              }}
-            />
-            <Bar dataKey="volume" radius={[4, 4, 0, 0]}>
-              {data.map((d) => (
-                <Cell key={d.date} fill={templateColor(d.templateId, picked)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      )}
+      </div>
       <div className="flex justify-center gap-2">
         {(Object.keys(RANGES) as Range[]).map((r) => (
           <button
