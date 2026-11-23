@@ -46,6 +46,8 @@ describe('progress', () => {
       ]),
     ).toEqual([false, false, true, false, true, false]);
     expect(setRecordFlags([], [set(100, 5)])).toEqual([false]); // first time ever: no PRs
+    // Past 12 reps e1RM is null, so a rep record at the same weight is what counts.
+    expect(setRecordFlags(history, [set(100, 30), set(100, 30), set(90, 20)])).toEqual([true, false, false]);
   });
 
   it('computes session stats excluding warm-ups', () => {

@@ -89,11 +89,16 @@ export function setRecordFlags(
   const pr = personalRecords(past);
   let topWeight = pr.topWeight?.value ?? 0;
   let best = pr.e1rm?.value ?? 0;
+  // Earlier working sets as (weight, reps), so a rep record at a weight counts: e1RM is blind past 12 reps.
+  const seen = history.flatMap((h) => h.sets.filter((x) => x.setType !== 'warmup'));
   return sets.map((s) => {
     if (!s.completed || s.setType === 'warmup' || !s.weightKg || !s.reps) return false;
     const est = e1rm(s.weightKg, s.reps) ?? 0;
-    const isPr = s.weightKg > topWeight || est > best;
-    topWeight = Math.max(topWeight, s.weightKg);
+    const w = s.weightKg;
+    const bestReps = Math.max(0, ...seen.filter((x) => x.weightKg >= w).map((x) => x.reps));
+    const isPr = w > topWeight || est > best || s.reps > bestReps;
+    seen.push({ ...s, weightKg: w, reps: s.reps } as (typeof seen)[number]);
+    topWeight = Math.max(topWeight, w);
     best = Math.max(best, est);
     return isPr;
   });
