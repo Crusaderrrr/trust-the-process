@@ -81,9 +81,43 @@ export default function ExerciseCard({
         <Link to={`/exercises/${we.exerciseId}`} className="min-w-0 flex-1 truncate text-[17px] font-semibold text-green-500">
           {we.name}
         </Link>
-        <button className={btn.icon} onClick={() => setSheet('menu')} aria-label="Exercise menu">
-          <Icon name="more" />
-        </button>
+        <div className="relative">
+          <button
+            className={btn.icon}
+            onClick={() => setSheet(sheet === 'menu' ? null : 'menu')}
+            aria-label="Exercise menu"
+            aria-expanded={sheet === 'menu'}
+          >
+            <Icon name="more" />
+          </button>
+          {/* Always mounted so it can animate out; invisible and untouchable while closed. */}
+          {sheet === 'menu' && (
+            <button className="fixed inset-0 z-10 cursor-default" onClick={close} aria-label="Close menu" />
+          )}
+          <div
+            className={`absolute right-0 top-full z-20 mt-1 w-52 origin-top-right overflow-hidden rounded-xl bg-neutral-800 py-1 shadow-xl ring-1 ring-neutral-700 transition duration-150 ${
+              sheet === 'menu' ? 'scale-100 opacity-100' : 'pointer-events-none scale-90 opacity-0'
+            }`}
+          >
+            <button
+              className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-neutral-100 active:bg-neutral-700"
+              onClick={() => (close(), onReplace())}
+            >
+              <Icon name="swap" className="h-5 w-5 text-neutral-400" />
+              Replace exercise
+            </button>
+            <button
+              className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-red-400 active:bg-neutral-700"
+              onClick={() => {
+                close();
+                void removeWorkoutExercise(workoutId, we.id);
+              }}
+            >
+              <Icon name="delete" className="h-5 w-5" />
+              Remove exercise
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Uncontrolled: DB reloads must not clobber typing. The note belongs to this workout only. */}
@@ -207,25 +241,6 @@ export default function ExerciseCard({
 
       {sheet === 'rest' && <RestSheet we={we} onClose={close} />}
 
-      {sheet === 'menu' && (
-        <Sheet title={we.name} onClose={close}>
-          <div className="flex flex-col gap-2 pb-2">
-            <MenuItem icon="swap" onClick={() => (close(), onReplace())}>
-              Replace exercise
-            </MenuItem>
-            <button
-              className={`${btn.danger} justify-start`}
-              onClick={() => {
-                close();
-                void removeWorkoutExercise(workoutId, we.id);
-              }}
-            >
-              <Icon name="delete" className="h-5 w-5" />
-              Remove exercise
-            </button>
-          </div>
-        </Sheet>
-      )}
     </section>
   );
 }
@@ -239,15 +254,6 @@ function Pill({ icon, onClick, children }: { icon: IconName; onClick: () => void
       <Icon name={icon} className="h-4 w-4 text-green-500" />
       {children}
       <Icon name="chevronDown" className="h-4 w-4 text-neutral-500" />
-    </button>
-  );
-}
-
-function MenuItem({ icon, onClick, children }: { icon: IconName; onClick: () => void; children: ReactNode }) {
-  return (
-    <button className={`${btn.secondary} justify-start`} onClick={onClick}>
-      <Icon name={icon} className="h-5 w-5 text-neutral-400" />
-      {children}
     </button>
   );
 }
