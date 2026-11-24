@@ -76,7 +76,7 @@ export default function SetRow({
       )}
       <div
         className={`${cardio ? CARDIO_GRID : SET_GRID} relative my-1 rounded-xl p-0.5 transition-[transform,background-color] ${
-          done ? (pr ? 'bg-amber-950' : 'bg-green-950') : 'bg-neutral-900'
+          done ? (pr ? 'bg-yellow-500/20' : 'bg-green-950') : 'bg-neutral-900'
         } ${shaking ? 'shake' : ''}`}
         style={{ transform: `translateX(${offset}px)` }}
         onTouchStart={(e) => (touchX.current = e.touches[0]!.clientX)}
