@@ -24,7 +24,7 @@ export default function TabBar() {
           className={({ isActive }) =>
             `relative flex flex-1 flex-col items-center gap-0.5 rounded-full py-1.5 text-[11px] font-medium transition duration-200 active:scale-90 ${
               isActive
-                ? 'bg-gradient-to-b from-white/10 to-white/[0.03] text-green-400 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_0_16px_rgba(34,197,94,0.18)]'
+                ? 'bg-gradient-to-b from-white/10 to-white/[0.03] text-green-400 ring-1 ring-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_0_16px_rgba(182,237,93,0.18)]'
                 : 'text-neutral-400 active:bg-white/5'
             }`
           }

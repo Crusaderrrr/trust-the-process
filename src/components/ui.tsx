@@ -4,19 +4,19 @@ import Icon, { type IconName } from './Icon';
 
 // Shared look: dark surfaces, one green accent, Material Symbols icons (components/Icon).
 
-export const card = 'rounded-2xl bg-neutral-900 ring-1 ring-white/[0.06]';
+export const card = 'rounded-3xl bg-neutral-900 ring-1 ring-neutral-700/70 shadow-[0_12px_28px_rgba(0,0,0,0.28)]';
 
 export const btn = {
   primary:
-    'inline-flex items-center justify-center gap-2 rounded-2xl bg-green-500 px-4 py-3.5 font-semibold text-neutral-950 transition active:scale-[0.98] active:bg-green-600 disabled:opacity-40',
+    'inline-flex items-center justify-center gap-2 rounded-full bg-linear-to-br from-green-400 to-[#8bd83c] px-4 py-3.5 font-bold text-[#172012] transition active:scale-[0.98] active:brightness-90 disabled:opacity-40',
   secondary:
-    'inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-800/80 px-4 py-3 font-medium text-neutral-100 transition active:scale-[0.98] active:bg-neutral-700',
+    'inline-flex items-center justify-center gap-2 rounded-full bg-neutral-800 px-4 py-3 font-medium text-neutral-100 transition active:scale-[0.98] active:bg-neutral-700',
   danger:
     'inline-flex items-center justify-center gap-2 rounded-2xl bg-red-500/10 px-4 py-3 font-medium text-red-400 transition active:scale-[0.98] active:bg-red-500/20',
   icon: 'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-800/80 text-neutral-200 transition active:bg-neutral-700',
   chip: (on: boolean) =>
     `shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
-      on ? 'bg-green-500 text-neutral-950' : 'bg-neutral-800/80 text-neutral-300 active:bg-neutral-700'
+      on ? 'bg-linear-to-br from-green-400 to-[#8bd83c] font-bold text-[#172012]' : 'bg-neutral-800 text-neutral-300 active:bg-neutral-700'
     }`,
 };
 

@@ -45,7 +45,7 @@ export default function TodayScreen() {
         subtitle={parseLocalDate(t).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
       />
 
-      <section className={`${card} flex flex-col gap-4 p-4`}>
+      <section className={`${card} flex flex-col gap-4 bg-linear-to-br from-[#16382c] to-[#11221c] p-4`}>
         {todayInfo && (
           <div className="flex items-center gap-3">
             <span className={`flex h-11 w-11 items-center justify-center rounded-full ${STATUS_STYLE[todayInfo.status]}`}>

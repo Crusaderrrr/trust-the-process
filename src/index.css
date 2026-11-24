@@ -1,5 +1,27 @@
 @import 'tailwindcss';
 
+/* Redesign palette: calm green-tinted dark base, warm lime accent. Remapping the stock scales keeps
+   every existing `neutral-*` / `green-*` class on-palette without touching each component. */
+@theme {
+  --color-neutral-50: #f7f9f5;
+  --color-neutral-100: #f3f6f1;
+  --color-neutral-200: #dde3de;
+  --color-neutral-300: #cbd3cc;
+  --color-neutral-400: #9ba69e;
+  --color-neutral-500: #74807a;
+  --color-neutral-600: #46524b;
+  --color-neutral-700: #2a342e;
+  --color-neutral-800: #202924;
+  --color-neutral-900: #151c19;
+  --color-neutral-950: #0b100f;
+  --color-green-300: #d6f79a;
+  --color-green-400: #c7f36b;
+  --color-green-500: #b6ed5d;
+  --color-green-600: #9fd94a;
+  --color-green-700: #5d853c;
+  --color-green-950: #213329;
+}
+
 /* The document never scrolls: on iOS the root scroller rubber-bands the whole UI (tab bar
    included) off-screen. Only the app's own scroll areas scroll, and they contain their
    overscroll. */
