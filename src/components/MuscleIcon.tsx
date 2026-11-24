@@ -19,8 +19,8 @@ const HIGHLIGHT: Record<MuscleGroup, Part[]> = {
 };
 const REAR: MuscleGroup[] = ['back', 'triceps', 'glutes'];
 
-const ON = '#22c55e';
-const OFF = '#737373';
+const ON = '#b6ed5d';
+const OFF = '#74807a';
 
 export default function MuscleIcon({ group, size = 44 }: { group: MuscleGroup; size?: number }) {
   const lit = new Set(HIGHLIGHT[group]);

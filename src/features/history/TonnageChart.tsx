@@ -154,16 +154,16 @@ export default function TonnageChart({
                 data={data}
                 margin={{ top: 8, right: 8, bottom: 0, left: -10 }}
               >
-                <CartesianGrid stroke="#262626" vertical={false} />
+                <CartesianGrid stroke="#2a342e" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tickFormatter={by === "week" ? weekRange : shortDate}
-                  tick={{ fill: "#737373", fontSize: 11 }}
-                  stroke="#262626"
+                  tick={{ fill: "#74807a", fontSize: 11 }}
+                  stroke="#2a342e"
                 />
                 <YAxis
-                  tick={{ fill: "#737373", fontSize: 11 }}
-                  stroke="#262626"
+                  tick={{ fill: "#74807a", fontSize: 11 }}
+                  stroke="#2a342e"
                 />
                 <Bar dataKey="volume" radius={[4, 4, 0, 0]}>
                   {data.map((d) => (

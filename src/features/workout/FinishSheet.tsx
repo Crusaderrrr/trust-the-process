@@ -90,19 +90,6 @@ export default function FinishSheet({
     <Sheet title="Save workout" onClose={onClose}>
       <div className="flex flex-col gap-3 pb-2">
         <input className={input} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
-        <textarea
-          className={input}
-          rows={2}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="How did it go?"
-        />
-        <div className={`${card} grid grid-cols-4 gap-1 p-3 text-center`}>
-          <Stat icon="clock" label="Time" value={formatDuration(duration)} />
-          <Stat icon="weight" label="Volume" value={`${formatWeight(summary.volume)} kg`} />
-          <Stat icon="sets" label="Sets" value={String(summary.sets)} />
-          <Stat icon="trophy" label="PRs" value={prs === undefined ? '…' : String(prs)} />
-        </div>
         <CheckIn
           rating={rating}
           feelings={feelings}
@@ -111,6 +98,19 @@ export default function FinishSheet({
             setFeelings(v.feelings);
           }}
         />
+        <textarea
+          className={input}
+          rows={2}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Notes..."
+        />
+        <div className={`${card} grid grid-cols-4 gap-1 p-3 text-center`}>
+          <Stat icon="clock" label="Time" value={formatDuration(duration)} />
+          <Stat icon="weight" label="Volume" value={`${formatWeight(summary.volume)} kg`} />
+          <Stat icon="sets" label="Sets" value={String(summary.sets)} />
+          <Stat icon="trophy" label="PRs" value={prs === undefined ? '…' : String(prs)} />
+        </div>
         <button
           className={btn.primary}
           onClick={async () => {

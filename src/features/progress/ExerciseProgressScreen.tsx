@@ -237,25 +237,25 @@ function Chart({ data, metric }: { data: SessionStats[]; metric: Metric }) {
       <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -18 }}>
         <defs>
           <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#22c55e" stopOpacity={0.35} />
-            <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+            <stop offset="0%" stopColor="#b6ed5d" stopOpacity={0.35} />
+            <stop offset="100%" stopColor="#b6ed5d" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid stroke="#262626" vertical={false} />
-        <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fill: '#737373', fontSize: 11 }} stroke="#262626" />
-        <YAxis domain={['auto', 'auto']} tick={{ fill: '#737373', fontSize: 11 }} stroke="#262626" />
+        <CartesianGrid stroke="#2a342e" vertical={false} />
+        <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fill: '#74807a', fontSize: 11 }} stroke="#2a342e" />
+        <YAxis domain={['auto', 'auto']} tick={{ fill: '#74807a', fontSize: 11 }} stroke="#2a342e" />
         <Tooltip
-          contentStyle={{ background: '#171717', border: '1px solid #262626', borderRadius: 12 }}
+          contentStyle={{ background: '#151c19', border: '1px solid #2a342e', borderRadius: 12 }}
           labelFormatter={(d) => shortDate(String(d))}
           formatter={(v) => [`${formatWeight(Math.round(Number(v) * 10) / 10)} kg`, METRICS[metric]]}
         />
         <Area
           type="monotone"
           dataKey={metric}
-          stroke="#22c55e"
+          stroke="#b6ed5d"
           strokeWidth={2.5}
           fill="url(#fill)"
-          dot={{ r: 3, fill: '#22c55e' }}
+          dot={{ r: 3, fill: '#b6ed5d' }}
           connectNulls
         />
       </AreaChart>

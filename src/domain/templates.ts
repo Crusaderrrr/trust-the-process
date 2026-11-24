@@ -57,7 +57,7 @@ export function layoutSlots<E extends { id: string }>(
 /** Colours a template can take; the first two are the defaults of Upper / Lower. */
 export const PALETTE = ['#38bdf8', '#f59e0b', '#a78bfa', '#f472b6', '#f87171', '#2dd4bf', '#a3e635', '#e5e5e5'] as const;
 /** Workouts that used no template. */
-export const NO_TEMPLATE_COLOR = '#22c55e';
+export const NO_TEMPLATE_COLOR = '#b6ed5d';
 
 const DEFAULT_COLORS: Record<string, string> = { upper: PALETTE[0], lower: PALETTE[1] };
 
