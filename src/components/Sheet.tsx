@@ -17,9 +17,9 @@ export default function Sheet({
   // Portal to <body>: inside a scroll container iOS confines z-index to that container, so
   // the tab bar (a sibling of the scroll area) would paint over the sheet.
   return createPortal(
-    <div className="fixed inset-0 z-40 flex flex-col justify-end bg-black/70 backdrop-blur-[2px]" onClick={onClose}>
+    <div className="fade-in fixed inset-0 z-40 flex flex-col justify-end bg-black/70 backdrop-blur-[2px]" onClick={onClose}>
       <div
-        className={`flex flex-col rounded-t-3xl bg-neutral-900 pb-[max(1rem,env(safe-area-inset-bottom))] ring-1 ring-white/[0.06] ${
+        className={`sheet-up flex flex-col rounded-t-3xl bg-neutral-900 pb-[max(1rem,env(safe-area-inset-bottom))] ring-1 ring-white/[0.06] ${
           full ? 'h-[92%]' : 'max-h-[85%]'
         }`}
         onClick={(e) => e.stopPropagation()}

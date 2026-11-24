@@ -40,6 +40,7 @@ export default function ExerciseList({
     },
   });
   const [search, setSearch] = useState("");
+  const [popped, setPopped] = useState<number | null>(null); // star that was just toggled
   const [muscle, setMuscle] = useState<MuscleGroup | null>(only ?? null);
 
   const q = search.trim().toLowerCase();
@@ -72,10 +73,16 @@ export default function ExerciseList({
       </button>
       <button
         className={`p-2 ${e.favorite ? "text-amber-400" : "text-neutral-600"}`}
-        onClick={() => setFavorite(e.id, !e.favorite)}
+        onClick={() => {
+          setPopped(e.id);
+          void setFavorite(e.id, !e.favorite);
+        }}
         aria-label={e.favorite ? "Remove from favourites" : "Add to favourites"}
       >
-        <Icon name={e.favorite ? "star" : "starOutline"} className="h-6 w-6" />
+        <Icon
+          name={e.favorite ? "star" : "starOutline"}
+          className={`h-6 w-6 ${popped === e.id && e.favorite ? "pop" : ""}`}
+        />
       </button>
       {chevron && (
         <Icon name="chevronRight" className="h-5 w-5 text-neutral-600" />

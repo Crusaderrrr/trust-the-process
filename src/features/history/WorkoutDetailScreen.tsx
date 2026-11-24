@@ -3,10 +3,12 @@ import ExerciseThumb from '../../components/ExerciseThumb';
 import Icon from '../../components/Icon';
 import { BackButton, btn, card, Stat } from '../../components/ui';
 import { FEELING_NAMES, RATING_COLOR, RATING_NAMES } from '../../domain/checkIn';
+import { setRecordFlags } from '../../domain/progress';
 import { formatSet, formatWeight, setLabels } from '../../domain/sets';
 import { formatDuration, summarize } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import { GRIP_NAMES } from '../../repositories/exercises';
+import { sessionsByExercise } from '../../repositories/progress';
 import { deleteWorkout, getWorkout } from '../../repositories/workouts';
 import { SET_TYPE_COLOR } from '../workout/SetRow';
 import WorkoutEditor from '../workout/WorkoutEditor';
@@ -20,6 +22,7 @@ function useWorkoutParam() {
 export function WorkoutDetailScreen() {
   const navigate = useNavigate();
   const w = useWorkoutParam();
+  const sessions = useDbQuery(() => sessionsByExercise(), [], { key: 'allSessions' });
   if (w === undefined) return null;
   if (w === null) return <Navigate to="/history" replace />;
   if (!w.finishedAt) return <Navigate to="/workout" replace />;
@@ -55,6 +58,10 @@ export function WorkoutDetailScreen() {
 
       {w.exercises.map((we) => {
         const labels = setLabels(we.sets.map((s) => s.setType));
+        // Only what came before this workout counts; no PR flags for cardio or while history loads.
+        const all = sessions?.get(we.exerciseId) ?? [];
+        const idx = all.findIndex((x) => x.workoutId === w.id);
+        const prs = we.isCardio || idx < 0 ? [] : setRecordFlags(all.slice(0, idx), we.sets);
         return (
           <section key={we.id} className={`${card} p-3`}>
             <Link to={`/exercises/${we.exerciseId}`} className="flex items-center gap-3">
@@ -68,9 +75,15 @@ export function WorkoutDetailScreen() {
             {we.note && <p className="mt-2 px-1 text-sm text-neutral-400">{we.note}</p>}
             <ul className="mt-3 flex flex-col gap-1">
               {we.sets.map((s, i) => (
-                <li key={s.id} className="flex items-center gap-3 rounded-lg bg-neutral-800/50 px-3 py-1.5 text-sm">
+                <li
+                  key={s.id}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm ${prs[i] ? 'bg-yellow-500/20' : 'bg-neutral-800/50'}`}
+                >
                   <span className={`w-5 text-center font-bold ${SET_TYPE_COLOR[s.setType]}`}>{labels[i]}</span>
                   <span className="tabular-nums">{formatSet(s, !!we.isCardio)}</span>
+                  {prs[i] && (
+                    <span className="ml-auto rounded bg-amber-500 px-1 text-[9px] font-extrabold leading-4 text-neutral-950">PR</span>
+                  )}
                 </li>
               ))}
             </ul>

@@ -1,4 +1,5 @@
 import { useRef, useState, type PointerEvent } from "react";
+import { Link } from "react-router";
 import {
   Bar,
   BarChart,
@@ -8,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import Icon from "../../components/Icon";
 import { btn, card } from "../../components/ui";
 import { addDays, parseLocalDate, today } from "../../domain/dates";
 import { RANGES, rangeStart, tonnage, type Range } from "../../domain/progress";
@@ -32,7 +34,13 @@ const weekRange = (d: string) =>
 export default function TonnageChart({
   workouts,
 }: {
-  workouts: { date: string; volume: number; templateId?: string | null }[];
+  workouts: {
+    id: string;
+    title: string;
+    date: string;
+    volume: number;
+    templateId?: string | null;
+  }[];
 }) {
   const [range, setRange] = useState<Range>("3M");
   const [by, setBy] = useState<"workout" | "week">("week");
@@ -198,6 +206,26 @@ export default function TonnageChart({
           </button>
         )}
       </div>
+      {point && by === "workout" && (
+        // Scrub to a bar, then open it. A day with two workouts gets one link each.
+        <div className="flex flex-col gap-1.5">
+          {workouts
+            .filter((w) => w.date === point.date)
+            .map((w) => (
+              <Link
+                key={w.id}
+                to={`/history/${w.id}`}
+                className={`${btn.secondary} justify-between`}
+              >
+                <span className="min-w-0 truncate">{w.title}</span>
+                <span className="flex shrink-0 items-center gap-1 text-green-500">
+                  Open
+                  <Icon name="chevronRight" className="h-5 w-5" />
+                </span>
+              </Link>
+            ))}
+        </div>
+      )}
       <div className="flex justify-center gap-2">
         {(Object.keys(RANGES) as Range[]).map((r) => (
           <button

@@ -56,6 +56,7 @@ export default function SetRow({
   onToggle: () => void;
 }) {
   const [offset, setOffset] = useState(0);
+  const [ticked, setTicked] = useState(false); // pop the tick only when the user just completed the set, not on load
   const touchX = useRef<number | null>(null);
 
   const done = !!set.completed;
@@ -147,10 +148,13 @@ export default function SetRow({
           className={`flex h-10 items-center justify-center rounded-xl transition ${
             done ? 'bg-green-500 text-neutral-950' : 'bg-neutral-800 text-neutral-500'
           }`}
-          onClick={onToggle}
+          onClick={() => {
+            setTicked(!done);
+            onToggle();
+          }}
           aria-label={done ? 'Mark not done' : 'Mark done'}
         >
-          <Icon name="check" className="h-6 w-6" />
+          <Icon name="check" className={`h-6 w-6 ${done && ticked ? 'pop' : ''}`} />
         </button>
       </div>
     </div>
