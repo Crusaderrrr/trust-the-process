@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent } from "react";
+import { useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import {
   Bar,
@@ -29,6 +29,20 @@ const shortDate = (d: string) =>
 /** Week bars are keyed by their Monday; the label spans Monday to Sunday ("26 Oct – 1 Nov"). */
 const weekRange = (d: string) =>
   `${shortDate(d)} – ${shortDate(addDays(d, 6))}`;
+
+/** Height + fade transition for a block that comes and goes; content stays mounted so it can animate out. */
+function Collapse({ open, children }: { open: boolean; children: ReactNode }) {
+  return (
+    <div
+      inert={!open}
+      className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${
+        open ? "grid-rows-[1fr] opacity-100" : "-mb-3 grid-rows-[0fr] opacity-0" // -mb-3 cancels the parent's gap
+      }`}
+    >
+      <div className="-mx-3 min-h-0 overflow-hidden px-3">{children}</div>
+    </div>
+  );
+}
 
 /** Total volume (completed working sets, kg × reps) per workout or per week. */
 export default function TonnageChart({
@@ -94,7 +108,7 @@ export default function TonnageChart({
           </button>
         </div>
       </div>
-      {by === "workout" && (
+      <Collapse open={by === "workout"}>
         <div className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto px-3">
           <button
             className={btn.chip(templateId === null)}
@@ -116,21 +130,23 @@ export default function TonnageChart({
             </button>
           ))}
         </div>
-      )}
-      {selected && (
-        <div className="flex items-center gap-2 text-xs text-neutral-400">
+      </Collapse>
+      <Collapse open={!!selected}>
+        {/* Reads templateId, not `selected`, so the row keeps its content while it fades out. */}
+        <div className="flex items-center gap-2 py-1 text-xs text-neutral-400">
           Colour
-          {PALETTE.map((c) => (
-            <button
-              key={c}
-              aria-label={`Use colour ${c}`}
-              className={`h-6 w-6 rounded-full ${templateColor(selected, picked) === c ? "ring-2 ring-white ring-offset-2 ring-offset-neutral-900" : ""}`}
-              style={{ background: c }}
-              onClick={() => setTemplateColor(selected, c)}
-            />
-          ))}
+          {templateId &&
+            PALETTE.map((c) => (
+              <button
+                key={c}
+                aria-label={`Use colour ${c}`}
+                className={`h-6 w-6 rounded-full ${templateColor(templateId, picked) === c ? "ring-2 ring-white ring-offset-2 ring-offset-neutral-900" : ""}`}
+                style={{ background: c }}
+                onClick={() => setTemplateColor(templateId, c)}
+              />
+            ))}
         </div>
-      )}
+      </Collapse>
       <div className="relative">
         {data.length === 0 ? (
           <div className="flex h-44 items-center justify-center text-sm text-neutral-500">
