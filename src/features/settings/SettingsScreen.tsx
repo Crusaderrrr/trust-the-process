@@ -101,15 +101,17 @@ export default function SettingsScreen() {
       <section className="flex flex-col gap-2">
         <SectionTitle>Data</SectionTitle>
         <button className={btn.secondary} disabled={importing} onClick={() => void runExport()}>
-          <Icon name="download" className="h-5 w-5 text-green-500" />
-          <span>
-            Export my workouts <span className="text-neutral-500">(JSON)</span>
+          <Icon name="upload" className="h-5 w-5 text-green-500" />
+          <span className="flex flex-col text-left">
+            Export my workouts
+            <span className="text-sm text-neutral-500">(JSON)</span>
           </span>
         </button>
         <button className={btn.secondary} disabled={importing} onClick={() => fileInput.current?.click()}>
-          <Icon name="upload" className="h-5 w-5 text-green-500" />
-          <span>
-            Import workouts <span className="text-neutral-500">(TTP JSON or Hevy CSV)</span>
+          <Icon name="download" className="h-5 w-5 text-green-500" />
+          <span className="flex flex-col text-left">
+            Import workouts
+            <span className="text-sm text-neutral-500">(TTP JSON or Hevy CSV)</span>
           </span>
         </button>
         <input
