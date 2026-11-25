@@ -156,10 +156,6 @@ export default function CalendarScreen() {
                 );
               })}
             </div>
-            <div className="mt-3 flex items-center gap-1 text-[11px] text-neutral-400">
-              <StatusMark status="done" />
-              {STATUS_NAME.done}
-            </div>
           </section>
 
           <section className="flex flex-col gap-2">
