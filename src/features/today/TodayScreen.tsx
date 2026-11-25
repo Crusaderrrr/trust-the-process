@@ -15,6 +15,13 @@ import { STATUS_NAME, STATUS_STYLE } from '../calendar/CalendarScreen';
 import { useDays } from '../calendar/useDays';
 import { formatDate } from '../history/HistoryScreen';
 
+/** "Wed 25 Nov". en-US short names are always three letters (en-GB says "Sept"). */
+const headerDate = (date: string) => {
+  const d = parseLocalDate(date);
+  const short = (o: Intl.DateTimeFormatOptions) => d.toLocaleDateString('en-US', o);
+  return `${short({ weekday: 'short' })} ${d.getDate()} ${short({ month: 'short' })}`;
+};
+
 export default function TodayScreen() {
   const navigate = useNavigate();
   const t = today();
@@ -40,7 +47,7 @@ export default function TodayScreen() {
     <div className="flex flex-col gap-5">
       <PageHeader
         title="Today"
-        subtitle={parseLocalDate(t).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+        subtitle={headerDate(t)}
       />
 
       {/* Raised "soft" tile: drop shadow below, lit top-left edge and shaded bottom-right inside. */}
