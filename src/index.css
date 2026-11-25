@@ -56,6 +56,13 @@ body {
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
+/* Scroll room behind the on-screen keyboard (keyboardInset.ts). */
+.kb-open .scroll-area::after {
+  content: '';
+  display: block;
+  flex-shrink: 0;
+  height: var(--kb);
+}
 
 /* Hide scrollbars on horizontal chip rows. */
 .no-scrollbar {

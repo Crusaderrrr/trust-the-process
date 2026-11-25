@@ -4,6 +4,7 @@ import { HashRouter } from 'react-router';
 import App from './App';
 import AuthGate from './features/auth/AuthGate';
 import './index.css';
+import './keyboardInset';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
