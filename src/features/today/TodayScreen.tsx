@@ -10,7 +10,6 @@ import { formatDuration } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import { getTemplateColors } from '../../repositories/templates';
 import { startRun } from '../../repositories/templateRun';
-import { SKIP_REASON_NAMES } from '../../repositories/skips';
 import { getActiveWorkout, listHistory, startWorkout } from '../../repositories/workouts';
 import { STATUS_NAME, STATUS_STYLE } from '../calendar/CalendarScreen';
 import { useDays } from '../calendar/useDays';
@@ -32,7 +31,6 @@ export default function TodayScreen() {
   const colors = useDbQuery(getTemplateColors, [], { key: 'template-colors' });
 
   const start = async (template?: Template) => {
-    if (todayInfo?.skip && !confirm('Today is marked as skipped. Start a workout and remove the skip?')) return;
     const id = await startWorkout(template);
     if (template) startRun(id, template.id);
     navigate('/workout');
@@ -49,16 +47,12 @@ export default function TodayScreen() {
         {todayInfo && (
           <div className="flex items-center gap-3">
             <span className={`flex h-11 w-11 items-center justify-center rounded-full ${STATUS_STYLE[todayInfo.status]}`}>
-              <Icon name={todayInfo.status === 'skipped' ? 'skipDay' : todayInfo.workouts.length ? 'check' : 'dumbbell'} />
+              <Icon name={todayInfo.workouts.length ? 'check' : 'dumbbell'} />
             </span>
             <div className="min-w-0">
               <p className="text-lg font-semibold">{STATUS_NAME[todayInfo.status]}</p>
               <p className="text-sm text-neutral-400">
-                {todayInfo.skip
-                  ? SKIP_REASON_NAMES[todayInfo.skip.reason]
-                  : todayInfo.workouts.length
-                    ? todayInfo.workouts.map((w) => w.title).join(', ')
-                    : 'Trust the process.'}
+                {todayInfo.workouts.length ? todayInfo.workouts.map((w) => w.title).join(', ') : 'Trust the process.'}
               </p>
             </div>
           </div>

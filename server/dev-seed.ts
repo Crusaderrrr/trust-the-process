@@ -1,6 +1,6 @@
 // `npm run seed:dev`: fills the `dev` account with test data for every feature, through the app's API,
 // so it stays validated and never touches another account. Credentials come from .env. Re-running wipes
-// that account's workouts and skips first, with dates relative to today. Not part of the server build.
+// that account's workouts first, with dates relative to today. Not part of the server build.
 // First run only: pass an invite (`docker exec ttp-app-1 node dist-server/cli.js invite`) as DEV_INVITE.
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -89,34 +89,16 @@ const CARDIO_CORE: Session = {
 const EVENING_RUN: Session = { title: 'Evening run', templateId: null, minutes: 30, lifts: [cardio('Treadmill', 25 * 60, 10, 1.5)] };
 
 type Planned = { date: string; hour: number; session: Session };
-type SkipRow = { date: string; reason: string; note: string | null; rating: string | null };
-
-// One of each reason, some with a note and a mood. Index = nth planned day counting back from today.
-const SKIPPED = new Map<number, Omit<SkipRow, 'date'>>([
-  [2, { reason: 'tired', note: 'Slept four hours', rating: 'bad' }],
-  [6, { reason: 'no_time', note: null, rating: 'okay' }],
-  [9, { reason: 'sick', note: 'Head cold', rating: 'bad' }],
-  [13, { reason: 'chose_not_to', note: null, rating: 'good' }],
-  [17, { reason: 'travel', note: 'Weekend away', rating: null }],
-  [21, { reason: 'injury', note: 'Tweaked lower back', rating: 'okay' }],
-  [25, { reason: 'other', note: null, rating: null }],
-]);
-
 /** Roughly 2.5 years of history: templates in the last 10 weeks, Push/Pull before, sparse after 14 months. */
-function schedule(now: string): { workouts: Planned[]; skips: SkipRow[] } {
+function schedule(now: string): Planned[] {
   const workouts: Planned[] = [];
-  const skips: SkipRow[] = [];
-  let planned = 0;
   for (let back = 1; back <= 900; back++) {
     const date = addDays(now, -back);
     const weekday = isoWeekday(date);
     if (back <= 70) {
       if (weekday === 6 && back % 14 < 7) workouts.push({ date, hour: 10, session: CARDIO_CORE });
       const session = { 1: UPPER, 2: LOWER, 4: UPPER, 5: LOWER }[weekday];
-      if (!session) continue;
-      const skip = SKIPPED.get(planned++);
-      if (skip) skips.push({ date, ...skip });
-      else workouts.push({ date, hour: 18, session });
+      if (session) workouts.push({ date, hour: 18, session });
     } else if (back <= 420) {
       if (weekday === 1) workouts.push({ date, hour: 18, session: PUSH });
       if (weekday === 4) workouts.push({ date, hour: 18, session: PULL });
@@ -128,7 +110,7 @@ function schedule(now: string): { workouts: Planned[]; skips: SkipRow[] } {
   const latest = workouts.find((w) => w.hour === 18);
   if (latest) workouts.push({ date: latest.date, hour: 21, session: EVENING_RUN });
   workouts.sort((a, b) => a.date.localeCompare(b.date) || a.hour - b.hour);
-  return { workouts, skips };
+  return workouts;
 }
 
 const round = (kg: number) => Math.round(kg / 2.5) * 2.5;
@@ -187,13 +169,10 @@ async function enter(): Promise<void> {
   cookie = res.headers.getSetCookie()[0]!.split(';')[0]!;
 }
 
-async function wipe(now: string): Promise<void> {
+async function wipe(): Promise<void> {
   const finished = await api<{ id: string }[]>('GET', '/history');
   const { workout: active } = await api<{ workout: { id: string } | null }>('GET', '/workouts/active');
   for (const { id } of active ? [...finished, active] : finished) await api('DELETE', `/workouts/${id}`);
-  for (const { date } of await api<{ date: string }[]>('GET', `/skips?from=${addDays(now, -1000)}&to=${now}`)) {
-    await api('DELETE', `/skips/${date}`);
-  }
 }
 
 type Exercise = { id: number; name: string; isCustom: number };
@@ -246,9 +225,9 @@ const setDoc = (position: number, s: Partial<SetRow>, completed: boolean, autoFi
 
 await enter();
 const now = today();
-await wipe(now);
+await wipe();
 const idOf = await setUpExercises();
-const { workouts, skips } = schedule(now);
+const workouts = schedule(now);
 
 const sessionsDone = new Map<string, number>();
 let index = 0;
@@ -327,7 +306,5 @@ await api('PUT', `/workouts/${activeId}`, {
   ],
 });
 
-// After the workouts: logging a new workout on a skipped day lifts the skip.
-for (const { date, ...skip } of skips) await api('PUT', `/skips/${date}`, skip);
 await api('POST', '/auth/logout', {});
-console.log(`Seeded "${USERNAME}" at ${BASE_URL}: ${workouts.length} finished workouts + 1 active, ${skips.length} skips.`);
+console.log(`Seeded "${USERNAME}" at ${BASE_URL}: ${workouts.length} finished workouts + 1 active.`);

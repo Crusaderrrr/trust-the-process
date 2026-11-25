@@ -1,4 +1,4 @@
-// Optional mood marks: a rating after a workout (with what influenced it) or on a skipped day.
+// Optional mood marks: a rating after a workout (with what influenced it).
 
 export const RATINGS = ['good', 'okay', 'bad'] as const;
 export type Rating = (typeof RATINGS)[number];

@@ -25,7 +25,7 @@ Run `typecheck` and `test` before saying a task is done.
 Test account `dev` on the running app (production DB, not admin): log in there to try new features.
 - Credentials: `DEV_ACCOUNT_USERNAME` / `DEV_ACCOUNT_PASSWORD` in [`.env`](.env) (gitignored). This repo is
   public and the app is on the internet, so never put the password in a tracked file.
-- `npm run seed:dev` resets its workouts and skips to fresh test data through the API, and can't touch other
+- `npm run seed:dev` resets its workouts to fresh test data through the API, and can't touch other
   accounts (`server/dev-seed.ts`).
 
 ## Architecture rules

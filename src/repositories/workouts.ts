@@ -21,7 +21,7 @@ export const getActiveWorkout = (): Promise<Workout | null> => loadActive();
 
 export const getWorkout = (id: string): Promise<WorkoutDetail | null> => loadWorkout(id);
 
-/** Starts today's workout; the server lifts a skip marked for today (SPEC §5.1). */
+/** Starts today's workout. */
 export async function startWorkout(template?: { id: string; name: string }): Promise<string> {
   const w = doc.newWorkout(newId(), new Date(), today());
   await create(template ? { ...w, title: template.name, templateId: template.id } : w);

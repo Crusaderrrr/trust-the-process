@@ -3,10 +3,10 @@ import { monthGrid, type DayStatus } from '../../domain/calendar';
 import { today } from '../../domain/dates';
 import { useDays } from './useDays';
 
-const CELL: Record<DayStatus, string> = { done: 'bg-green-500', skipped: 'bg-amber-500', rest: 'bg-neutral-800/70' };
+const CELL: Record<DayStatus, string> = { done: 'bg-green-500', rest: 'bg-neutral-800/70' };
 
 /**
- * The whole year at a glance: twelve small month grids. A day is green (workout) or amber (skipped)
+ * The whole year at a glance: twelve small month grids. A day with a workout is green
  * and carries no other info; tap a month to open it.
  */
 export default function YearView({ year, onPickMonth }: { year: number; onPickMonth: (month0: number) => void }) {

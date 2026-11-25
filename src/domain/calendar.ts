@@ -1,11 +1,6 @@
 import { addDays, isoWeekday, toLocalDate } from './dates';
 
-export type DayStatus = 'done' | 'skipped' | 'rest';
-
-export function dayStatus(d: { done: boolean; skipped: boolean }): DayStatus {
-  if (d.done) return 'done';
-  return d.skipped ? 'skipped' : 'rest';
-}
+export type DayStatus = 'done' | 'rest';
 
 /** Inclusive list of dates from → to. */
 export function datesBetween(from: string, to: string): string[] {

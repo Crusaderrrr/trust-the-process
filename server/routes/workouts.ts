@@ -182,8 +182,6 @@ async function saveWorkout(sql: Sql, uid: number, w: WorkoutBody): Promise<'ok' 
       ON CONFLICT (id) DO UPDATE SET title = excluded.title, date = excluded.date, started_at = excluded.started_at,
         finished_at = excluded.finished_at, notes = excluded.notes, rest_ends_at = excluded.rest_ends_at,
         rating = excluded.rating, feelings = excluded.feelings, template_id = excluded.template_id`;
-    // Starting or logging a workout on a day marked as skipped lifts the skip.
-    if (!existing[0]) await tx`DELETE FROM skip WHERE user_id = ${uid} AND date = ${w.date}`;
 
     await tx`DELETE FROM workout_exercise WHERE workout_id = ${w.id}`; // cascades to sets
     if (w.exercises.length) {

@@ -205,6 +205,7 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Speed pass: keyed stale-while-revalidate in `useDbQuery`, exercise library opens from the device copy, workout PUT no longer triggers refetches, one query for a workout's Previous sets, removed the unused SQLite layer
 
 ## Feedback round 10 (2026-11-25)
+- [x] Marking days as skipped removed completely (UI, `/api/skips`, seed); migration 011 drops the `skip` table, so saved skips are deleted on deploy
 - [x] Cardio set header reads "Incline" (no %)
 - [x] Chart ranges: 1W 1M 3M 1Y All (3Y gone), on the History chart and exercise progress
 - [x] History tab sections noted in `IDEAS.md`

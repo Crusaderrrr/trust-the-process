@@ -49,6 +49,5 @@ export const FEELINGS = [
   'felt_strong',
 ] as const;
 export const SET_TYPES = ['normal', 'warmup', 'drop', 'failure'] as const;
-export const SKIP_REASONS = ['sick', 'injury', 'tired', 'no_time', 'travel', 'chose_not_to', 'other'] as const;
 
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

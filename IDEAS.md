@@ -15,7 +15,7 @@ is in `ROADMAP.md`. This file keeps feature ideas that aren't scheduled yet.
 - Exercise types: duration (Plank), weighted/assisted bodyweight, distance.
 - Per-exercise notes that persist across workouts (seat height, grip).
 - **Yearly calendar**: a whole-year view next to the monthly one, with much smaller cells.
-  Workout days and skipped days share one colour and show no other info (no details, just
+  Workout days get one colour and show no other info (no details, just
   "something happened that day").
 - Stats: weekly sets per muscle group, training streak.
 - **History tab sections** (more details to come): the tab splits into several sections, the first

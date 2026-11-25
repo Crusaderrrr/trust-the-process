@@ -168,26 +168,6 @@ describe('exercise library', () => {
   });
 });
 
-describe('skips', () => {
-  it('saves, lists, updates and removes skips per account', async () => {
-    await call('PUT', '/api/skips/2026-10-03', ann, { reason: 'sick', note: null });
-    await call('PUT', '/api/skips/2026-10-03', ann, { reason: 'travel', note: 'Rome' });
-    await call('PUT', '/api/skips/2026-10-09', ann, { reason: 'tired', note: null });
-    expect((await call('GET', '/api/skips?from=2026-10-01&to=2026-10-05', ann)).json).toEqual([
-      { date: '2026-10-03', reason: 'travel', note: 'Rome', rating: null },
-    ]);
-    expect((await call('GET', '/api/skips?from=2026-10-01&to=2026-10-31', bob)).json).toEqual([]);
-    // the mood of a skipped day is optional and replaced on every save
-    await call('PUT', '/api/skips/2026-10-09', ann, { reason: 'tired', note: null, rating: 'okay' });
-    expect((await call('GET', '/api/skips?from=2026-10-09&to=2026-10-09', ann)).json[0]).toMatchObject({ rating: 'okay' });
-    expect((await call('PUT', '/api/skips/2026-10-09', ann, { reason: 'tired', note: null, rating: 'meh' })).status).toBe(400);
-    await call('DELETE', '/api/skips/2026-10-09', ann);
-    expect((await call('GET', '/api/skips?from=2026-10-01&to=2026-10-31', ann)).json).toHaveLength(1);
-    expect((await call('PUT', '/api/skips/2026-10-03', ann, { reason: 'nope', note: null })).status).toBe(400);
-    expect((await call('PUT', '/api/skips/not-a-date', ann, { reason: 'sick', note: null })).status).toBe(400);
-  });
-});
-
 describe('workouts', () => {
   it('keeps the template a workout was started from, and each account has its own template colours', async () => {
     const bench = await exerciseId(ann, 'Barbell Bench Press');
@@ -275,16 +255,6 @@ describe('workouts', () => {
     await call('PUT', `/api/workouts/${open.id}`, bob, { ...open, finishedAt: '2026-10-25T09:00:00.000Z' });
     expect((await call('GET', '/api/workouts/active', bob)).json).toEqual({ workout: null });
     await call('DELETE', `/api/workouts/${anns.id}`, ann);
-  });
-
-  it('starting a workout on a skipped day lifts the skip, editing an existing one does not', async () => {
-    await call('PUT', '/api/skips/2026-10-12', ann, { reason: 'sick', note: null });
-    const w = doc([], { date: '2026-10-12', startedAt: '2026-10-12T17:00:00.000Z', finishedAt: '2026-10-12T18:00:00.000Z' });
-    await call('PUT', `/api/workouts/${w.id}`, ann, w);
-    expect((await call('GET', '/api/skips?from=2026-10-12&to=2026-10-12', ann)).json).toEqual([]);
-    await call('PUT', '/api/skips/2026-10-12', ann, { reason: 'tired', note: null });
-    await call('PUT', `/api/workouts/${w.id}`, ann, { ...w, title: 'Changed' });
-    expect((await call('GET', '/api/skips?from=2026-10-12&to=2026-10-12', ann)).json).toHaveLength(1);
   });
 
   it('gives the Previous column from the latest earlier finished workout, preferring the same grip', async () => {
