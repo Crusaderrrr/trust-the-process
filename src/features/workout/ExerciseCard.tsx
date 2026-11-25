@@ -176,7 +176,7 @@ export default function ExerciseCard({
           <>
             <span>TIME</span>
             <span>KM/H</span>
-            <span>INCLINE %</span>
+            <span>INCLINE</span>
           </>
         ) : (
           <>
