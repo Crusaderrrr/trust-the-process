@@ -138,8 +138,13 @@ export default function SettingsScreen() {
           <Row
             icon="settings"
             iconBg="bg-neutral-600"
-            title="Build"
-            detail={new Date(__BUILD_TIME__).toLocaleString('en-GB')}
+            title="Version"
+            detail={
+              <>
+                <span className="text-neutral-200">{__APP_VERSION__}</span>
+                <span className="ml-2 text-neutral-500">{new Date(__BUILD_TIME__).toLocaleDateString('en-GB')}</span>
+              </>
+            }
           />
         </div>
         <p className="px-1 text-xs text-neutral-500">

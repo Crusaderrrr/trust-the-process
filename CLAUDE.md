@@ -13,6 +13,12 @@ a task changes state. The plan to go public is `ROADMAP.md`; unscheduled ideas l
 - Small, focused commits with clear messages. One concern per commit.
 - If the spec is ambiguous or seems wrong, say so and propose a fix — don't silently improvise.
 
+## Versioning
+- The app version is `version` in `package.json` (shown in Settings → About), 0.5.0 from 2026-11-25.
+- Bump it with every change that ships: `npm version <patch|minor> --no-git-tag-version`, in the same push.
+  Patch = fixes and small changes (renames, restyling); minor = a new feature or section. Unless the
+  owner names the level, decide yourself and say which you picked.
+
 ## Commands
 - `npm run db:dev` — local Postgres (Docker, port 5433); server tests need it
 - `npm run dev:server` — API (needs `DATABASE_URL`); `npm run dev` — Vite, proxies `/api`

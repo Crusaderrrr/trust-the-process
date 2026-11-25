@@ -204,6 +204,9 @@ Live URL: https://crusaderrrr.github.io/
 - [ ] Render + Neon migration: plan and runbook in `MIGRATE-RENDER.md`. Render service `ttp` (Frankfurt, Free) is live against an empty Neon DB; data restore, `clientIp` check and phone install still to do
 - [x] Speed pass: keyed stale-while-revalidate in `useDbQuery`, exercise library opens from the device copy, workout PUT no longer triggers refetches, one query for a workout's Previous sets, removed the unused SQLite layer
 
+## Versioning (2026-11-25)
+- [x] Starts at 0.5.0 (rule in `CLAUDE.md`); Settings → About shows version + build date
+
 ## Feedback round 10 (2026-11-25)
 - [x] Marking days as skipped removed completely (UI, `/api/skips`, seed); migration 011 drops the `skip` table, so saved skips are deleted on deploy
 - [x] Cardio set header reads "Incline" (no %)
