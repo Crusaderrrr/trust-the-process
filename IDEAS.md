@@ -17,6 +17,14 @@ is in `ROADMAP.md`. This file keeps feature ideas that aren't scheduled yet.
 - **Yearly calendar**: a whole-year view next to the monthly one, with much smaller cells.
   Workout days and skipped days share one colour and show no other info (no details, just
   "something happened that day").
-- Stats: weekly sets per muscle group, training streak, muscle distribution.
+- Stats: weekly sets per muscle group, training streak.
+- **History tab sections** (more details to come): the tab splits into several sections, the first
+  being the current tonnage chart as it is.
+  - Monthly report: content to be described later. Two delivery options: send to email, or
+    download a PDF.
+  - Muscle distribution.
+  - Favourite exercises.
+  - Detailed chart: pick a concrete date range for the data. Some functionality will probably move
+    here from the first chart.
 - Plate calculator / warm-up set generator.
 - Body weight / measurements tracking.
