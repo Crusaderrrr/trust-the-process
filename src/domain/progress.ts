@@ -104,11 +104,15 @@ export function setRecordFlags(
   });
 }
 
-/** Chart time ranges, in days back from today. */
-export const RANGES = { '1M': 30, '3M': 91, '1Y': 365, '3Y': 1095 } as const;
+/** Chart time ranges, in days back from today; null = no limit. */
+export const RANGES = { '1W': 7, '1M': 30, '3M': 91, '1Y': 365, All: null } as const;
 export type Range = keyof typeof RANGES;
 
-export const rangeStart = (range: Range, today: string) => addDays(today, -RANGES[range]);
+/** First date of the range; '' for no limit, which sorts before every ISO date. */
+export const rangeStart = (range: Range, today: string) => {
+  const days = RANGES[range];
+  return days === null ? '' : addDays(today, -days);
+};
 
 /**
  * Total tonnage per workout or per ISO week (keyed by its Monday), chronological, from `from` on.

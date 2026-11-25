@@ -126,5 +126,7 @@ describe('tonnage', () => {
 
   it('computes range starts', () => {
     expect(rangeStart('1M', '2026-10-24')).toBe('2026-09-24');
+    expect(rangeStart('1W', '2026-10-24')).toBe('2026-10-17');
+    expect(rangeStart('All', '2026-10-24')).toBe(''); // sorts before every date
   });
 });
