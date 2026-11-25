@@ -204,6 +204,13 @@ Live URL: https://crusaderrrr.github.io/
 - [ ] Render + Neon migration: plan and runbook in `MIGRATE-RENDER.md`. Render service `ttp` (Frankfurt, Free) is live against an empty Neon DB; data restore, `clientIp` check and phone install still to do
 - [x] Speed pass: keyed stale-while-revalidate in `useDbQuery`, exercise library opens from the device copy, workout PUT no longer triggers refetches, one query for a workout's Previous sets, removed the unused SQLite layer
 
+## Feedback round 10 (2026-11-25)
+- [x] Cardio set header reads "Incline" (no %)
+- [x] Chart ranges: 1W 1M 3M 1Y All (3Y gone), on the History chart and exercise progress
+- [x] History tab sections noted in `IDEAS.md`
+- [x] Unfinished-sets sheet: "Finish anyway" (primary), "Complete them", "Keep logging"
+- [ ] Keyboard no longer covers the focused field (`keyboardInset.ts`): needs the iPhone check (desktop can't reproduce it)
+
 ## Live PR badge (2026-11-20)
 - [x] A completed working set that beats the exercise's best top weight or e1RM (earlier sets of the same workout count) gets an amber "PR" tag: `setRecordFlags` in `domain/progress.ts` (tested), history via `sessionsByExercise`, shown in `SetRow`. Live workouts only; no badge for a first-ever exercise, cardio, or while offline
 - [ ] Not clicked through in the browser yet. Not done: haptics, whole-workout tonnage record at finish
