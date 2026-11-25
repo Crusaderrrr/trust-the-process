@@ -60,18 +60,19 @@ export default function FinishSheet({
         <p className="mb-4 flex items-center gap-2 text-neutral-400">
           <Icon name="warning" className="h-5 w-5 text-amber-400" />
           {incomplete} set{incomplete === 1 ? ' is' : 's are'} not marked done.
+          {completed > 0 && ' Finishing anyway discards them.'}
         </p>
         <div className="flex flex-col gap-2 pb-2">
-          {resolvable.length > 0 && (
-            <button className={btn.primary} onClick={() => finalizeWorkout(workout.id, resolvable, {})}>
-              <Icon name="check" />
-              Complete {resolvable.length === incomplete ? 'them' : `${resolvable.length} with values`}
+          {completed > 0 && (
+            <button className={btn.primary} onClick={() => finalizeWorkout(workout.id, [], {})}>
+              <Icon name="finish" />
+              Finish anyway
             </button>
           )}
-          {completed > 0 && (
-            <button className={btn.secondary} onClick={() => finalizeWorkout(workout.id, [], {})}>
-              <Icon name="delete" className="h-5 w-5" />
-              Discard incomplete sets
+          {resolvable.length > 0 && (
+            <button className={btn.secondary} onClick={() => finalizeWorkout(workout.id, resolvable, {})}>
+              <Icon name="check" className="h-5 w-5" />
+              Complete {resolvable.length === incomplete ? 'them' : `${resolvable.length} with values`}
             </button>
           )}
           <button className={btn.secondary} onClick={onClose}>
