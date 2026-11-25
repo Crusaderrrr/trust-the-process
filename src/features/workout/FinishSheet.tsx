@@ -23,7 +23,7 @@ export function resolvableSets(w: WorkoutDetail) {
 }
 
 /**
- * Finish flow (SPEC §6.2): resolve incomplete sets first, then a save sheet with title, notes
+ * Finish flow: resolve incomplete sets first, then a save sheet with title, notes
  * and a summary. Callers handle the "no completed sets at all" case before opening this.
  */
 export default function FinishSheet({

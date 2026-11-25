@@ -7,7 +7,7 @@ import { notifyTimesUp } from './notify';
 
 /**
  * Countdown derived from the persisted rest_ends_at, so it survives reloads. The "time's up"
- * signal can only fire while the app is visible — iOS suspends background PWAs (SPEC §7).
+ * signal can only fire while the app is visible — iOS suspends background PWAs.
  */
 export default function RestBar({ workoutId, endsAt }: { workoutId: string; endsAt: string }) {
   const now = useNow(250);

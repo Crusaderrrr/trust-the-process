@@ -3,15 +3,14 @@
 Workout tracker (Hevy-inspired). React + TypeScript PWA talking to a Hono + Postgres server
 (`server/`), invite-only accounts, self-hosted via Docker Compose (see `DEPLOY.md`). Started as an
 offline-only SQLite/OPFS app on GitHub Pages; that was replaced in v2 (merged to `main`
-2026-10-27). `SPEC.md` is the original v1 spec: domain logic, screens and exercise seed still
-apply, storage/deploy parts are superseded. Current status lives in `PROGRESS.md` — update it when
+2026-10-27). Current status lives in `PROGRESS.md` — update it when
 a task changes state. The plan to go public is `ROADMAP.md`; unscheduled ideas live in `IDEAS.md`.
 
 ## Working agreement
 - No plan approval needed for small work: implement directly, track in `PROGRESS.md`.
 - Don't add dependencies without asking first.
 - Small, focused commits with clear messages. One concern per commit.
-- If the spec is ambiguous or seems wrong, say so and propose a fix — don't silently improvise.
+- If a request is ambiguous or seems wrong, say so and propose a fix — don't silently improvise.
 
 ## Versioning
 - The app version is `version` in `package.json` (shown in Settings → About), 0.5.0 from 2026-11-25.

@@ -101,7 +101,7 @@ export async function createExercise(e: {
   }
 }
 
-/** Custom exercises without history are deleted; anything with history is archived (SPEC §4). */
+/** Custom exercises without history are deleted; anything with history is archived. */
 export async function removeExercise(id: number): Promise<'deleted' | 'archived'> {
   const { result } = await api<{ result: 'deleted' | 'archived' }>('DELETE', `/exercises/${id}`);
   cacheRemove(id); // an archived one reappears in the archived list at its next refresh

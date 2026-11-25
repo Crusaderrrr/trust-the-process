@@ -1,6 +1,6 @@
 # Progress — Trust The Process (TTP)
 
-Phases from SPEC §9. ✅ = built and verified on desktop (mobile viewport); 📱 = confirmed on iPhone.
+✅ = built and verified on desktop (mobile viewport); 📱 = confirmed on iPhone.
 Live URL: https://crusaderrrr.github.io/
 
 ## Decisions
@@ -201,7 +201,11 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Settings → Data → "Import from Hevy (CSV)": `domain/hevyImport.ts` (parser + tests) → `repositories/dataTransfer.ts` (matches exercises by name, creates unknown ones, PUTs each workout; deterministic ids so re-import replaces)
 - [ ] Try on the dev account with the real export (not run against a server yet: Docker was off)
 - [x] JSON export/import of finished workouts (`domain/dataExport.ts`, Settings → Data); the same import button reads TTP JSON or Hevy CSV by file extension
-- [ ] Render + Neon migration: plan and runbook in `MIGRATE-RENDER.md`. Render service `ttp` (Frankfurt, Free) is live against an empty Neon DB; data restore, `clientIp` check and phone install still to do
+- [ ] Render + Neon migration: Render service `ttp` (Frankfurt, Free) is live against an empty Neon DB (direct, not pooled, connection URL; health check path `/manifest.webmanifest` so Neon can sleep). Still to do (full runbook: `MIGRATE-RENDER.md` in git history):
+  - restore the laptop data (`pg_dump --clean --if-exists --no-owner --no-privileges`, then `psql -v ON_ERROR_STOP=1`)
+  - check `clientIp` (`server/auth.ts`) behind Render: it takes the last `X-Forwarded-For` entry, which was right for Tailscale and may be Render's proxy, so the login rate limit could be shared between users
+  - phone: add the new URL to the Home Screen, allow notifications, test the rest push
+  - set up own weekly `pg_dump` backups, not as public CI artifacts
 - [x] Speed pass: keyed stale-while-revalidate in `useDbQuery`, exercise library opens from the device copy, workout PUT no longer triggers refetches, one query for a workout's Previous sets, removed the unused SQLite layer
 
 ## Versioning (2026-11-25)

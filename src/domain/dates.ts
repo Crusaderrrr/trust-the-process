@@ -1,5 +1,5 @@
 // Calendar dates are local-time `YYYY-MM-DD` strings. Never derive them from toISOString():
-// that is the UTC date and is wrong around midnight (SPEC §7).
+// that is the UTC date and is wrong around midnight.
 
 const pad = (n: number) => String(n).padStart(2, '0');
 

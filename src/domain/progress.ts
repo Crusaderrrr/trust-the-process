@@ -14,7 +14,7 @@ export type SessionStats = {
 export type Record = { value: number; date: string } | null;
 export type PersonalRecords = { topWeight: Record; e1rm: Record; volume: Record };
 
-/** Epley; unreliable beyond 12 reps, so null there (SPEC §5.3). */
+/** Epley; unreliable beyond 12 reps, so null there. */
 export function e1rm(weightKg: number, reps: number): number | null {
   return reps <= 12 ? weightKg * (1 + reps / 30) : null;
 }

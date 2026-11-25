@@ -11,7 +11,7 @@ export type DayInfo = {
   mood: Rating | null;
 };
 
-/** Status of every day in [from, to] (SPEC §5.1). */
+/** Status of every day in [from, to]. */
 export function useDays(from: string, to: string): DayInfo[] | undefined {
   return useDbQuery(async () => {
     const workouts = await workoutsBetween(from, to);
