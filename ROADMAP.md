@@ -2,11 +2,11 @@
 
 Written 2026-11-03. The order is deliberate: each phase has an **exit check** and the next one
 starts only after it passes. Nothing public happens before the security gate in Phase 7 passes.
-`IDEAS.md` keeps the unscheduled feature ideas; this file is the plan.
+`TODO.md` keeps the unscheduled feature work; this file is the plan.
 
 ## Where we are (2026-11-03)
 - React + TS PWA + Hono/Node + Postgres, Docker Compose, meant for the owner's laptop behind
-  Tailscale Funnel (`DEPLOY.md`, not yet run there).
+  Tailscale Funnel.
 - Invite-only accounts (argon2id, hashed session tokens in cookies, rate limits, CSP, CSRF
   guard), per-user data, rest-timer Web Push, local-first saving of an open workout.
 - Features: logging (set types, Previous, rest timer), history + edit, weekly plan + calendar,
@@ -67,7 +67,7 @@ Only what makes someone switch from Hevy/Strong:
   photos; the source of the current photos) — curated, not dumped. Add equipment + muscle
   metadata and better search.
 - **Routines (basic)**: Hevy users expect them, and the import should bring theirs over.
-  Periodization comes after launch (see `IDEAS.md`).
+  Periodization comes after launch (see `TODO.md`).
 - Onboarding: first-run flow (units are kg, set up a plan, import from another app).
 - **Exit:** a real Hevy export and a real Strong export import correctly.
 

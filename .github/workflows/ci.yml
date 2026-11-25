@@ -1,6 +1,6 @@
 name: CI
 
-# Checks main and PRs (GitHub Pages is retired; v2 is self-hosted, see DEPLOY.md).
+# Checks main and PRs (GitHub Pages is retired; v2 is self-hosted).
 on:
   push:
     branches: [main]

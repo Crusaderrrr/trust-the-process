@@ -215,7 +215,7 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Marking days as skipped removed completely (UI, `/api/skips`, seed); migration 011 drops the `skip` table, so saved skips are deleted on deploy
 - [x] Cardio set header reads "Incline" (no %)
 - [x] Chart ranges: 1W 1M 3M 1Y All (3Y gone), on the History chart and exercise progress
-- [x] History tab sections noted in `IDEAS.md`
+- [x] History tab sections noted in `TODO.md` (then `IDEAS.md`)
 - [x] Unfinished-sets sheet: "Finish anyway" (primary), "Complete them", "Keep logging"
 - [ ] Keyboard no longer covers the focused field (`keyboardInset.ts`): needs the iPhone check (desktop can't reproduce it)
 

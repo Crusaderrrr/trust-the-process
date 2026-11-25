@@ -1,10 +1,10 @@
 # CLAUDE.md — Trust The Process (TTP)
 
 Workout tracker (Hevy-inspired). React + TypeScript PWA talking to a Hono + Postgres server
-(`server/`), invite-only accounts, self-hosted via Docker Compose (see `DEPLOY.md`). Started as an
+(`server/`), invite-only accounts, shipped as a Docker image (`Dockerfile`; `compose.yaml`). Started as an
 offline-only SQLite/OPFS app on GitHub Pages; that was replaced in v2 (merged to `main`
 2026-10-27). Current status lives in `PROGRESS.md` — update it when
-a task changes state. The plan to go public is `ROADMAP.md`; unscheduled ideas live in `IDEAS.md`.
+a task changes state. The plan to go public is `ROADMAP.md`; unscheduled feature work lives in `TODO.md`.
 
 ## Working agreement
 - No plan approval needed for small work: implement directly, track in `PROGRESS.md`.
