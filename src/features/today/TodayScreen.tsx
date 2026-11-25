@@ -50,8 +50,8 @@ export default function TodayScreen() {
         subtitle={headerDate(t)}
       />
 
-      {/* Raised "soft" tile: drop shadow below, lit top-left edge and shaded bottom-right inside. */}
-      <section className="flex flex-col gap-4 rounded-3xl bg-linear-to-br from-[#16382c] to-[#11221c] p-4 shadow-[inset_3px_3px_8px_rgba(255,255,255,0.09),inset_-4px_-4px_10px_rgba(0,0,0,0.4),0_10px_24px_rgba(0,0,0,0.5)]">
+      {/* Pressed into the screen: shadow under the top-left edge, light caught on the bottom-right. */}
+      <section className="flex flex-col gap-4 rounded-3xl bg-linear-to-br from-[#16382c] to-[#11221c] p-4 shadow-[inset_5px_5px_12px_rgba(0,0,0,0.55),inset_-3px_-3px_8px_rgba(255,255,255,0.07),0_1px_0_rgba(255,255,255,0.05)]">
         {todayInfo && (
           <div className="flex items-center gap-3">
             <span className={`flex h-11 w-11 items-center justify-center rounded-full ${STATUS_STYLE[todayInfo.status]}`}>
