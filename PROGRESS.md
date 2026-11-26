@@ -225,3 +225,6 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Calendar: Month / Year tabs, year view is twelve small grids (workout and skipped days share a colour)
 - [x] Glass-style tab bar; icons on the Export / Import buttons
 - [ ] Not clicked through in a browser yet; 010 must run on the deployed DB
+
+## Today first block (2026-11-26)
+- [x] Glassy style for the start-workout block, its buttons and the day icon; style noted in CLAUDE.md (0.5.1)
