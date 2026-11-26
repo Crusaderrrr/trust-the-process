@@ -9,10 +9,10 @@ const tabs: { to: string; label: string; icon: IconName }[] = [
   { to: '/settings', label: 'Settings', icon: 'settings' },
 ];
 
-/** Translucent, blurred pill; the active tab sits in a darker lens. */
+/** Floating pill; its look and the active tab's come from the theme. */
 export default function TabBar() {
   return (
-    <nav className="pointer-events-auto relative mx-auto flex w-full max-w-md gap-1 rounded-full bg-neutral-900/60 p-1.5 ring-1 ring-white/[0.06] backdrop-blur-2xl backdrop-saturate-200 shadow-[0_12px_32px_rgba(0,0,0,0.55)]">
+    <nav className="ui-tabbar pointer-events-auto relative mx-auto flex w-full max-w-md gap-1 rounded-full p-1.5">
       {tabs.map((t) => (
         <NavLink
           key={t.to}
@@ -20,9 +20,7 @@ export default function TabBar() {
           end={t.to === '/'}
           className={({ isActive }) =>
             `relative flex flex-1 flex-col items-center gap-0.5 rounded-full py-1.5 text-[11px] font-medium transition duration-200 active:scale-90 ${
-              isActive
-                ? 'bg-black/50 text-green-400'
-                : 'text-neutral-400 active:bg-white/5'
+              isActive ? 'ui-tab-on' : 'ui-tab'
             }`
           }
         >

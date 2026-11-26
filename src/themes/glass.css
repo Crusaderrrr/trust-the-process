@@ -1,0 +1,52 @@
+/* Glass: see-through surfaces with a soft inner glow; green radial and pressed-in dark controls. */
+
+/* The two recurring looks, defined once. */
+@utility glass-green {
+  @apply bg-radial from-green-400 from-20% to-[#8bd83c]/50 shadow-[4px_4px_8px_rgba(0,0,0,0.45)] ring-1 ring-green-700/60 ring-inset;
+}
+@utility glass-dark {
+  @apply bg-black/35 ring-1 ring-white/10 ring-inset shadow-[inset_4px_4px_8px_rgba(0,0,0,0.6),inset_-2px_-2px_4px_rgba(255,255,255,0.12)];
+}
+
+@layer components {
+  [data-theme='glass'] {
+    /* surfaces */
+    .ui-card { @apply rounded-3xl bg-radial from-white/[0.04] from-25% to-transparent to-90% shadow-[inset_3px_3px_8px_rgba(255,255,255,0.04),inset_-3px_-3px_8px_rgba(255,255,255,0.04),inset_0_0_18px_rgba(255,255,255,0.07),0_1px_0_rgba(255,255,255,0.03)]; }
+    .ui-card-press { @apply active:bg-black/35; }
+    .ui-input { @apply glass-dark; }
+
+    /* buttons */
+    .ui-btn-primary { @apply glass-green text-[#172012] active:scale-95 active:brightness-90; }
+    .ui-btn-secondary { @apply glass-dark text-neutral-100 active:bg-black/50 active:shadow-[inset_7px_7px_14px_rgba(0,0,0,0.85),inset_-2px_-2px_4px_rgba(255,255,255,0.12)]; }
+    .ui-btn-danger { @apply glass-dark bg-red-500/10 text-red-400 active:scale-[0.98] active:bg-red-500/20; }
+    .ui-btn-icon { @apply glass-dark text-neutral-200 active:bg-black/50; }
+    .ui-chip { @apply glass-dark text-neutral-400 active:bg-black/50; }
+    .ui-chip-on { @apply glass-green font-bold text-neutral-950; }
+    .ui-btn-label { @apply inline-flex items-center gap-1.5 transition; }
+    /* The label shrinks too, so the button reads as pushed down. */
+    button:active > .ui-btn-label,
+    a:active > .ui-btn-label { scale: 0.9; }
+
+    /* Today: start-workout block (a plain card in this theme) */
+    .ui-hero {}
+    .ui-hero-primary { @apply px-2! whitespace-nowrap; }
+    /* The play glyph has blank space on its left that skews centring. */
+    .ui-hero-primary > .ui-btn-label > svg { @apply -ml-2; }
+
+    /* status circles, calendar days, settings row icons */
+    .ui-mark-done { @apply glass-green text-neutral-950; }
+    .ui-mark-idle { @apply glass-dark text-neutral-400; }
+    .ui-day-done { @apply glass-green text-neutral-950; }
+    .ui-day-idle { @apply glass-dark text-neutral-400; }
+    /* The whole day cell is green, so its tick needs no circle. */
+    .ui-day-tick {}
+    .ui-mood { @apply shadow-[2px_2px_3px_rgba(0,0,0,0.6)]; }
+    .ui-row-accent { @apply glass-green text-neutral-950; }
+    .ui-row-muted { @apply glass-dark text-neutral-400; }
+
+    /* navigation: blurred base, so content scrolling underneath can't hide the labels */
+    .ui-tabbar { @apply bg-neutral-950/75 bg-radial from-white/[0.04] from-25% to-transparent to-90% backdrop-blur-2xl backdrop-saturate-200 shadow-[inset_3px_3px_8px_rgba(255,255,255,0.04),inset_-3px_-3px_8px_rgba(255,255,255,0.04),inset_0_0_18px_rgba(255,255,255,0.07),0_12px_32px_rgba(0,0,0,0.55)]; }
+    .ui-tab { @apply text-neutral-400 active:bg-white/5; }
+    .ui-tab-on { @apply glass-dark text-green-400; }
+  }
+}

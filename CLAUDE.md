@@ -52,16 +52,8 @@ Test account `dev` on the running app (production DB, not admin): log in there t
 - Functional components + hooks. Feature folders under `src/features/`.
 - Prefer clarity over cleverness; explain non-obvious decisions in a short comment.
 
-## Glassy style
-When the owner asks for the "glassy style", use these Tailwind classes (reference: the first block on
-Today, `features/today/TodayScreen.tsx`). Pick the variant that matches the component.
-- **Block / card:** `rounded-3xl bg-radial from-[#16382c] from-25% to-transparent to-90%
-  shadow-[inset_3px_3px_8px_rgba(255,255,255,0.04),inset_-3px_-3px_8px_rgba(255,255,255,0.04),inset_0_0_18px_rgba(255,255,255,0.07),0_1px_0_rgba(255,255,255,0.03)]`
-- **Primary (green) button:** on `btn.primary`: `bg-radial! from-green-400/70! from-20% to-[#8bd83c]/20!
-  shadow-[4px_4px_8px_rgba(0,0,0,0.45)] ring-1 ring-white/30 ring-inset`. Press: whole button
-  `active:scale-95!`, label wrapped in `<span className="transition group-active:scale-90">` (`group` on the button).
-- **Dark button / icon circle:** `bg-black/35 ring-1 ring-white/10 ring-inset
-  shadow-[inset_4px_4px_8px_rgba(0,0,0,0.6),inset_-2px_-2px_4px_rgba(255,255,255,0.12)]` (on `btn.*` use
-  `bg-black/35!`). Press: no scaling of the button (`active:scale-100!`), `active:bg-black/50!`,
-  `active:shadow-[inset_7px_7px_14px_rgba(0,0,0,0.85),inset_-2px_-2px_4px_rgba(255,255,255,0.12)]`, label
-  shrinks as above.
+## Themes
+- Look lives in `src/themes/<id>.css`, never in components: they use `.ui-*` classes (shapes and layout
+  stay as Tailwind utilities). `glass` is the default, `original` the pre-redesign look.
+- "Glassy style" means: give the component the matching `.ui-*` class, styled as in `themes/glass.css`.
+- A new `.ui-*` class goes into every theme file (`themes.test.ts` checks). New theme: see `themes/index.ts`.

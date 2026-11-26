@@ -152,7 +152,7 @@ export default function ExerciseProgressScreen() {
             return (
               <button
                 key={`${s.workoutId}-${s.grip}`}
-                className={`${card} flex flex-col gap-2 p-3 text-left active:bg-neutral-800`}
+                className={`${card} ui-card-press flex flex-col gap-2 p-3 text-left`}
                 onClick={() => navigate(`/history/${s.workoutId}`)}
               >
                 <div className="flex items-center justify-between text-sm">
@@ -182,7 +182,7 @@ export default function ExerciseProgressScreen() {
         <SectionTitle>Exercise settings</SectionTitle>
         <div className={`${card} divide-y divide-white/[0.06] overflow-hidden`}>
           <label className="block cursor-pointer">
-            <Row icon="camera" iconBg="bg-sky-600" title={exercise.image ? 'Change photo' : 'Add photo'} chevron />
+            <Row icon="camera" iconBg="bg-sky-600 text-white" title={exercise.image ? 'Change photo' : 'Add photo'} chevron />
             <input
               type="file"
               accept="image/*"
@@ -195,19 +195,19 @@ export default function ExerciseProgressScreen() {
             />
           </label>
           {exercise.image && (
-            <Row icon="image" iconBg="bg-neutral-600" title="Remove photo" onClick={() => setExerciseImage(id, null)} />
+            <Row icon="image" iconBg="ui-row-muted" title="Remove photo" onClick={() => setExerciseImage(id, null)} />
           )}
           {!exercise.isCardio && (
-            <Row icon="grip" iconBg="bg-violet-600" title="Grips">
+            <Row icon="grip" iconBg="bg-violet-600 text-white" title="Grips">
               <GripSetPicker value={exercise.gripSet} onChange={(v) => setGripSet(id, v)} />
             </Row>
           )}
           {exercise.archived ? (
-            <Row icon="unarchive" iconBg="bg-green-600" title="Unarchive exercise" onClick={() => unarchiveExercise(id)} />
+            <Row icon="unarchive" iconBg="ui-row-accent" title="Unarchive exercise" onClick={() => unarchiveExercise(id)} />
           ) : (
             <Row
               icon={exercise.isCustom ? 'delete' : 'archive'}
-              iconBg="bg-red-600"
+              iconBg="bg-red-600 text-white"
               title={exercise.isCustom ? 'Remove exercise' : 'Archive exercise'}
               onClick={remove}
             />

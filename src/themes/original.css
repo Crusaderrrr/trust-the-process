@@ -1,0 +1,37 @@
+/* The look before the glass redesign. Every theme styles the same `.ui-*` classes (themes.test.ts). */
+@layer components {
+  [data-theme='original'] {
+    /* surfaces */
+    .ui-card { @apply rounded-3xl bg-neutral-900 ring-1 ring-neutral-700/70 shadow-[0_12px_28px_rgba(0,0,0,0.28)]; }
+    .ui-card-press { @apply active:bg-neutral-800; }
+    .ui-input { @apply bg-neutral-800/80 ring-1 ring-white/[0.04]; }
+
+    /* buttons */
+    .ui-btn-primary { @apply bg-linear-to-br from-green-400 to-[#8bd83c] text-[#172012] active:scale-[0.98] active:brightness-90; }
+    .ui-btn-secondary { @apply bg-neutral-800 text-neutral-100 active:scale-[0.98] active:bg-neutral-700; }
+    .ui-btn-danger { @apply bg-red-500/10 text-red-400 active:scale-[0.98] active:bg-red-500/20; }
+    .ui-btn-icon { @apply bg-neutral-800/80 text-neutral-200 active:bg-neutral-700; }
+    .ui-chip { @apply bg-neutral-800 text-neutral-300 active:bg-neutral-700; }
+    .ui-chip-on { @apply bg-linear-to-br from-green-400 to-[#8bd83c] font-bold text-[#172012]; }
+    .ui-btn-label { @apply inline-flex items-center gap-2; }
+
+    /* Today: start-workout block */
+    .ui-hero { @apply bg-linear-to-br from-[#16382c] to-[#11221c]; }
+    .ui-hero-primary {}
+
+    /* status circles, calendar days, settings row icons */
+    .ui-mark-done { @apply bg-green-500 text-neutral-950; }
+    .ui-mark-idle { @apply bg-neutral-800/50 text-neutral-400; }
+    .ui-day-done { @apply bg-green-500/10 ring-1 ring-inset ring-green-500/30; }
+    .ui-day-idle { @apply bg-neutral-800/50 text-neutral-400; }
+    .ui-day-tick { @apply bg-green-500 text-neutral-950; }
+    .ui-mood {}
+    .ui-row-accent { @apply bg-green-600 text-white; }
+    .ui-row-muted { @apply bg-neutral-600 text-white; }
+
+    /* navigation */
+    .ui-tabbar { @apply bg-neutral-900/60 ring-1 ring-white/[0.06] backdrop-blur-2xl backdrop-saturate-200 shadow-[0_12px_32px_rgba(0,0,0,0.55)]; }
+    .ui-tab { @apply text-neutral-400 active:bg-white/5; }
+    .ui-tab-on { @apply bg-black/50 text-green-400; }
+  }
+}

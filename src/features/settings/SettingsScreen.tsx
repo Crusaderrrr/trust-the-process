@@ -7,11 +7,13 @@ import { formatRest, REST_OPTIONS } from '../../domain/workout';
 import { useDbQuery } from '../../hooks/useDbQuery';
 import { getDefaultRest, setDefaultRest } from '../../repositories/exercises';
 import { exportData, importFile } from '../../repositories/dataTransfer';
+import { applyTheme, getTheme, THEMES } from '../../themes';
 import { useAuth } from '../auth/AuthGate';
 import InviteSheet from './InviteSheet';
 
 export default function SettingsScreen() {
   const [message, setMessage] = useState('');
+  const [theme, setTheme] = useState(getTheme);
   const defaultRest = useDbQuery(getDefaultRest, []);
   const [restSheet, setRestSheet] = useState(false);
   const { user, logout } = useAuth();
@@ -62,7 +64,7 @@ export default function SettingsScreen() {
       <section className="flex flex-col gap-2">
         <SectionTitle>Account</SectionTitle>
         <div className={`${card} overflow-hidden`}>
-          <Row icon="check" iconBg="bg-green-600" title="Signed in as" detail={user.username} />
+          <Row icon="check" iconBg="ui-row-accent" title="Signed in as" detail={user.username} />
         </div>
         {user.isAdmin && (
           <button className={btn.secondary} onClick={() => setInviteSheet(true)}>
@@ -86,7 +88,7 @@ export default function SettingsScreen() {
         <div className={`${card} overflow-hidden`}>
           <Row
             icon="timer"
-            iconBg="bg-green-600"
+            iconBg="ui-row-accent"
             title="Default rest timer"
             detail={defaultRest === undefined ? '' : formatRest(defaultRest)}
             onClick={() => setRestSheet(true)}
@@ -96,6 +98,25 @@ export default function SettingsScreen() {
         <p className="px-1 text-xs text-neutral-500">
           Used by every exercise unless you set its rest timer during a workout.
         </p>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <SectionTitle>Theme</SectionTitle>
+        <div className="flex gap-2">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              className={`${btn.chip(t.id === theme)} flex-1 py-3!`}
+              aria-pressed={t.id === theme}
+              onClick={() => {
+                applyTheme(t.id);
+                setTheme(t.id);
+              }}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="flex flex-col gap-2">
@@ -137,7 +158,7 @@ export default function SettingsScreen() {
         <div className={`${card} overflow-hidden`}>
           <Row
             icon="settings"
-            iconBg="bg-neutral-600"
+            iconBg="ui-row-muted"
             title="Version"
             detail={
               <>

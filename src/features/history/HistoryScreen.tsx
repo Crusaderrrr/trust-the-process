@@ -33,7 +33,7 @@ export default function HistoryScreen() {
       {data?.items.map((w) => {
         const prs = data.prs.get(w.id) ?? 0;
         return (
-          <Link key={w.id} to={`/history/${w.id}`} className={`${card} flex flex-col gap-3 p-4 active:bg-neutral-800`}>
+          <Link key={w.id} to={`/history/${w.id}`} className={`${card} ui-card-press flex flex-col gap-3 p-4`}>
             <div>
               <h2 className="truncate text-lg font-semibold">{w.title}</h2>
               <p className="text-sm text-neutral-400">{formatDate(w.date)}</p>

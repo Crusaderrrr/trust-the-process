@@ -2,26 +2,22 @@ import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import Icon, { type IconName } from './Icon';
 
-// Shared look: dark surfaces, one green accent, Material Symbols icons (components/Icon).
+// Shared shapes only. Colours, shadows and press effects come from the active theme (src/themes).
 
-export const card = 'rounded-3xl bg-neutral-900 ring-1 ring-neutral-700/70 shadow-[0_12px_28px_rgba(0,0,0,0.28)]';
+export const card = 'ui-card';
 
 export const btn = {
   primary:
-    'inline-flex items-center justify-center gap-2 rounded-full bg-linear-to-br from-green-400 to-[#8bd83c] px-4 py-3.5 font-bold text-[#172012] transition active:scale-[0.98] active:brightness-90 disabled:opacity-40',
-  secondary:
-    'inline-flex items-center justify-center gap-2 rounded-full bg-neutral-800 px-4 py-3 font-medium text-neutral-100 transition active:scale-[0.98] active:bg-neutral-700',
-  danger:
-    'inline-flex items-center justify-center gap-2 rounded-2xl bg-red-500/10 px-4 py-3 font-medium text-red-400 transition active:scale-[0.98] active:bg-red-500/20',
-  icon: 'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-800/80 text-neutral-200 transition active:bg-neutral-700',
+    'ui-btn-primary inline-flex items-center justify-center gap-2 rounded-full px-4 py-3.5 font-bold transition disabled:opacity-40',
+  secondary: 'ui-btn-secondary inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 font-medium transition',
+  danger: 'ui-btn-danger inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-medium transition',
+  icon: 'ui-btn-icon inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition',
   chip: (on: boolean) =>
-    `shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
-      on ? 'bg-linear-to-br from-green-400 to-[#8bd83c] font-bold text-[#172012]' : 'bg-neutral-800 text-neutral-300 active:bg-neutral-700'
-    }`,
+    `shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${on ? 'ui-chip-on' : 'ui-chip'}`,
 };
 
 export const input =
-  'w-full rounded-xl bg-neutral-800/80 px-3.5 py-3 text-base text-neutral-100 outline-none ring-1 ring-white/[0.04] placeholder:text-neutral-500 focus:ring-2 focus:ring-green-500';
+  'ui-input w-full rounded-xl px-3.5 py-3 text-base text-neutral-100 outline-none placeholder:text-neutral-500 focus:ring-2 focus:ring-green-500';
 
 export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
   return (
@@ -64,7 +60,7 @@ export function Stat({ icon, label, value }: { icon?: IconName; label: string; v
 /** iOS-style grouped list row. */
 export function Row({
   icon,
-  iconBg = 'bg-neutral-700',
+  iconBg = 'bg-neutral-700 text-white',
   title,
   detail,
   onClick,
@@ -81,7 +77,7 @@ export function Row({
 }) {
   const body = (
     <>
-      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white ${iconBg}`}>
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
         <Icon name={icon} className="h-[18px] w-[18px]" />
       </span>
       <span className="min-w-0 flex-1 text-left">{title}</span>

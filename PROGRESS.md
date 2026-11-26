@@ -228,3 +228,4 @@ Live URL: https://crusaderrrr.github.io/
 
 ## Today first block (2026-11-26)
 - [x] Glassy style for the start-workout block, its buttons and the day icon; style noted in CLAUDE.md (0.5.1)
+- [x] Glass look on all tabs; Settings → Theme (Glass / Original), themes are CSS files in `src/themes/`

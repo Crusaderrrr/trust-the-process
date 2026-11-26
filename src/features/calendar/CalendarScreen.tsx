@@ -11,26 +11,21 @@ import { formatDate } from '../history/HistoryScreen';
 import YearView from './YearView';
 import { useDays, type DayInfo } from './useDays';
 
-export const STATUS_STYLE: Record<DayStatus, string> = {
-  done: 'bg-green-500 text-neutral-950',
-  rest: 'bg-neutral-800/50 text-neutral-400',
-};
-
 export const STATUS_NAME: Record<DayStatus, string> = {
   done: 'Done',
   rest: 'No workout',
 };
 
 /** Tick for a done day; a dot for days with nothing. */
-function StatusMark({ status, size = 'h-4 w-4' }: { status: DayStatus; size?: string }) {
+function StatusMark({ status }: { status: DayStatus }) {
   if (status === 'done') {
     return (
-      <span className={`flex ${size} shrink-0 items-center justify-center rounded-full bg-green-500 text-neutral-950`}>
+      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ui-mark-done`}>
         <Icon name="check" className="h-full w-full p-px" />
       </span>
     );
   }
-  return <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${STATUS_STYLE[status]}`} />;
+  return <span className="ui-mark-idle h-2.5 w-2.5 shrink-0 rounded-full" />;
 }
 
 export default function CalendarScreen() {
@@ -131,7 +126,7 @@ export default function CalendarScreen() {
                   <button
                     key={date}
                     className={`relative aspect-square rounded-xl text-sm font-medium ${
-                      d ? (d.status === 'done' ? 'bg-green-500/10 ring-1 ring-inset ring-green-500/30' : STATUS_STYLE.rest) : ''
+                      d ? (d.status === 'done' ? 'ui-day-done' : 'ui-day-idle') : ''
                     } ${date === t ? 'font-bold outline-2 outline-offset-1 outline-white' : ''}`}
                     // One logged workout: open it directly. Several: the sheet lets you pick.
                     onClick={() =>
@@ -140,14 +135,14 @@ export default function CalendarScreen() {
                   >
                     {d?.mood && (
                       <span
-                        className="absolute left-1/2 top-1 h-2 w-2 -translate-x-1/2 rounded-full"
+                        className="ui-mood absolute left-1/2 top-1 h-2 w-2 -translate-x-1/2 rounded-full"
                         style={{ background: RATING_COLOR[d.mood] }}
                       />
                     )}
                     {Number(date.slice(8))}
                     {d?.status === 'done' && (
-                      <span className="absolute bottom-1 right-1">
-                        <StatusMark status={d.status} size="h-3.5 w-3.5" />
+                      <span className="ui-day-tick absolute bottom-1 right-1 flex h-3.5 w-3.5 rounded-full">
+                        <Icon name="check" className="h-full w-full p-px" />
                       </span>
                     )}
                   </button>

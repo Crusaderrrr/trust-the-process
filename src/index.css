@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import './themes/original.css';
+@import './themes/glass.css';
 
 /* Redesign palette: calm green-tinted dark base, warm lime accent. Remapping the stock scales keeps
    every existing `neutral-*` / `green-*` class on-palette without touching each component. */
