@@ -17,10 +17,11 @@ type ExerciseRow = {
   grip_set: string | null;
   is_cardio: boolean;
   last_grip: string | null;
+  catalog_id: string | null;
 };
 
 const COLS = `id, name, muscle_group, equipment, is_custom, archived, rest_seconds, rest_custom, favorite, image,
-  grip_set, is_cardio,
+  grip_set, is_cardio, catalog_id,
   CASE WHEN exercise.grip_set IS NOT NULL THEN (
     SELECT we.grip FROM workout_exercise we JOIN workout w ON w.id = we.workout_id
     WHERE we.exercise_id = exercise.id AND we.grip IS NOT NULL ORDER BY w.started_at DESC, we.position DESC LIMIT 1
@@ -41,6 +42,7 @@ export const exerciseJson = (r: ExerciseRow) => ({
   gripSet: r.grip_set,
   isCardio: +r.is_cardio,
   lastGrip: r.last_grip,
+  catalogId: r.catalog_id,
 });
 
 const createBody = z.object({

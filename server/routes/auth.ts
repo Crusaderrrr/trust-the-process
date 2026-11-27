@@ -17,6 +17,7 @@ import {
   type AuthEnv,
 } from '../auth.js';
 import type { Sql } from '../db.js';
+import { syncUser } from '../catalog.js';
 import { seedExercises } from '../seed.js';
 
 const signupBody = z.object({
@@ -67,6 +68,7 @@ export function authRoutes(sql: Sql): Hono<AuthEnv> {
       await tx`UPDATE invite SET used_by = ${created.id}, used_at = now() WHERE code = ${code}`;
       await tx`INSERT INTO user_settings (user_id) VALUES (${created.id})`;
       await seedExercises(tx, created.id);
+      await syncUser(tx, created.id);
       return { id: Number(created.id), isAdmin: created.is_admin };
     });
     if (result === 'invalid_invite') {

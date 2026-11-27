@@ -101,7 +101,7 @@ describe('exercise library', () => {
       json.map((e: { name: string }) => e.name.toLowerCase()).sort(),
     );
     const byName = (n: string) => json.find((e: { name: string }) => e.name === n);
-    expect(byName('Lat Pulldown')).toMatchObject({ gripSet: 'back', isCardio: 0, isCustom: 0, restSeconds: 120, image: '/exercises/lat-pulldown.jpg' });
+    expect(byName('Lat Pulldown')).toMatchObject({ gripSet: 'back', isCardio: 0, isCustom: 0, restSeconds: 120, image: null, catalogId: null });
     expect(byName('Treadmill')).toMatchObject({ isCardio: 1, restSeconds: 0, muscleGroup: 'cardio' });
     expect(byName('Dip').gripSet).toBeNull();
     expect(byName('Triceps Pushdown').gripSet).toBe('triceps');

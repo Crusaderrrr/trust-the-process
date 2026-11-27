@@ -3,8 +3,6 @@
 // that account's workouts first, with dates relative to today. Not part of the server build.
 // First run only: pass an invite (`docker exec ttp-app-1 node dist-server/cli.js invite`) as DEV_INVITE.
 import { randomUUID } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 import { addDays, isoWeekday, parseLocalDate, today } from '../src/domain/dates.js';
 
 const BASE_URL = process.env.DEV_BASE_URL ?? 'http://localhost:3000';
@@ -57,7 +55,7 @@ const PUSH: Session = {
   lifts: [
     lift('Barbell Bench Press', 60, 0.5),
     lift('Overhead Press', 40, 0.25),
-    lift('Landmine Press', 20, 0.25),
+    lift('Garage Landmine Press', 20, 0.25),
     lift('Skull Crusher', 25, 0.25),
     lift('Dip', 0, 0),
   ],
@@ -81,7 +79,7 @@ const CARDIO_CORE: Session = {
   minutes: 45,
   lifts: [
     cardio('Treadmill', 20 * 60, 9.5, 1),
-    cardio('Rowing Machine', 10 * 60, 12, 0),
+    cardio('Water Rower', 10 * 60, 12, 0),
     lift('Hanging Leg Raise', 0, 0),
     lift('Cable Crunch', 40, 0.5),
   ],
@@ -182,12 +180,13 @@ async function setUpExercises(): Promise<(name: string) => number> {
   await api('PUT', '/settings', { defaultRestSeconds: DEFAULT_REST });
   await api('PUT', '/settings/template-colors/upper', { color: '#a78bfa' });
 
-  // An own photo is stored as a JPEG data URL.
-  const photo = await readFile(path.resolve(import.meta.dirname, '../public/exercises/dumbbell-row.jpg'));
+  // An own photo is stored as a JPEG data URL; this one is a 1x1 placeholder.
+  const photo =
+    '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
   const custom = [
-    { name: 'Landmine Press', muscleGroup: 'chest', equipment: 'other', image: `data:image/jpeg;base64,${photo.toString('base64')}`, gripSet: null },
+    { name: 'Garage Landmine Press', muscleGroup: 'chest', equipment: 'other', image: `data:image/jpeg;base64,${photo}`, gripSet: null },
     { name: 'Chest-Supported Row', muscleGroup: 'back', equipment: 'machine', image: null, gripSet: 'back' },
-    { name: 'Rowing Machine', muscleGroup: 'cardio', equipment: 'machine', image: null, gripSet: null },
+    { name: 'Water Rower', muscleGroup: 'cardio', equipment: 'machine', image: null, gripSet: null },
     { name: 'Sled Push', muscleGroup: 'full_body', equipment: 'other', image: null, gripSet: null }, // no history, so it can be hard-deleted
   ];
   const list = async () => [...(await api<Exercise[]>('GET', '/exercises')), ...(await api<Exercise[]>('GET', '/exercises?archived=1'))];
