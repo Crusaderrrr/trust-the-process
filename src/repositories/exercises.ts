@@ -126,6 +126,13 @@ export async function setExerciseImage(id: number, image: string | null) {
   patchOpenDocs((w) => patchExerciseInfo(w, id, { image }));
 }
 
+/** Gives an own exercise the picture and instructions of a library one (which it replaces). Needs a connection. */
+export async function linkExercise(id: number, catalogId: string) {
+  const e = await api<Exercise>('POST', `/exercises/${id}/link`, { catalogId });
+  cacheUpdate(e);
+  patchOpenDocs((w) => patchExerciseInfo(w, id, { image: e.image }));
+}
+
 export const setFavorite = (id: number, favorite: boolean) => patch(id, { favorite });
 
 /** Rest chosen in a workout: this exercise keeps it, whatever the default becomes. */

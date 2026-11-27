@@ -22,6 +22,7 @@ export default function ExerciseList({
   selected,
   chevron = false,
   only,
+  libraryOnly = false,
   onPick,
 }: {
   archived?: boolean;
@@ -29,6 +30,8 @@ export default function ExerciseList({
   chevron?: boolean;
   /** Fixed muscle group (template slots): hides the group chips. */
   only?: MuscleGroup;
+  /** Hide own exercises and ones without a catalog entry. */
+  libraryOnly?: boolean;
   onPick: (e: Exercise) => void;
 }) {
   // The device copy shows at once; the server's list replaces it when it arrives.
@@ -46,6 +49,7 @@ export default function ExerciseList({
   const q = search.trim().toLowerCase();
   const shown = (all ?? []).filter(
     (e) =>
+      (!libraryOnly || (!e.isCustom && !!e.catalogId)) &&
       (!muscle || e.muscleGroup === muscle) &&
       (!q || e.name.toLowerCase().includes(q)),
   );

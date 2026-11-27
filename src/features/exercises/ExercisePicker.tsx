@@ -11,6 +11,7 @@ export default function ExercisePicker({
   single = false,
   title,
   only,
+  libraryOnly = false,
   onDone,
   onClose,
 }: {
@@ -18,6 +19,8 @@ export default function ExercisePicker({
   title?: string;
   /** Only offer this muscle group (template slots). */
   only?: MuscleGroup;
+  /** Only built-in exercises that have a catalog entry, with no way to create one. */
+  libraryOnly?: boolean;
   onDone: (ids: number[]) => void;
   onClose: () => void;
 }) {
@@ -31,11 +34,13 @@ export default function ExercisePicker({
 
   return (
     <Sheet title={title ?? (single ? 'Replace exercise' : 'Add exercises')} onClose={onClose} full>
-      <button className="mb-3 inline-flex items-center gap-1 self-start text-sm font-medium text-green-500" onClick={() => setCreating(true)}>
-        <Icon name="add" className="h-5 w-5" />
-        New exercise
-      </button>
-      <ExerciseList only={only} selected={new Set(selected)} onPick={(e) => toggle(e.id)} />
+      {!libraryOnly && (
+        <button className="mb-3 inline-flex items-center gap-1 self-start text-sm font-medium text-green-500" onClick={() => setCreating(true)}>
+          <Icon name="add" className="h-5 w-5" />
+          New exercise
+        </button>
+      )}
+      <ExerciseList only={only} libraryOnly={libraryOnly} selected={new Set(selected)} onPick={(e) => toggle(e.id)} />
       {!single && (
         <div className="sticky bottom-0 bg-neutral-900 pt-3">
           <button className={`${btn.primary} w-full`} disabled={!selected.length} onClick={() => onDone(selected)}>

@@ -60,4 +60,6 @@ export type Exercise = {
   isCardio: number;
   /** Grip used the last time this exercise was logged (grip exercises only). */
   lastGrip: Grip | null;
+  /** Library entry with instructions and pictures; null for plain custom exercises. */
+  catalogId: string | null;
 };

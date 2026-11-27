@@ -91,6 +91,7 @@ export const pendingExercises = (): Exercise[] =>
       gripSet: cardio ? null : body.gripSet,
       isCardio: cardio ? 1 : 0,
       lastGrip: null,
+      catalogId: null,
     };
   });
 

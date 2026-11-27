@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import Icon from '../../components/Icon';
@@ -8,11 +8,14 @@ import { parseLocalDate, today } from '../../domain/dates';
 import { personalRecords, RANGES, rangeStart, sessionStats, type Range, type SessionStats } from '../../domain/progress';
 import { formatSet, formatWeight, setLabels } from '../../domain/sets';
 import { useDbQuery } from '../../hooks/useDbQuery';
+import { getCatalogEntry } from '../../repositories/catalog';
 import {
   getExercise,
   GRIP_NAMES,
   GRIPS,
   label,
+  linkExercise,
+  listExercises,
   removeExercise,
   setExerciseImage,
   setFavorite,
@@ -21,10 +24,12 @@ import {
   type Grip,
 } from '../../repositories/exercises';
 import { sessionsByExercise } from '../../repositories/progress';
+import ExercisePicker from '../exercises/ExercisePicker';
 import { GripSetPicker } from '../exercises/NewExerciseSheet';
 import { photoToDataUrl } from '../exercises/photo';
 import { formatDate } from '../history/HistoryScreen';
 import { SET_TYPE_COLOR } from '../workout/SetRow';
+import ExerciseAbout, { ExercisePoses } from './ExerciseAbout';
 
 const METRICS = {
   topWeight: 'Top weight',
@@ -35,16 +40,33 @@ type Metric = keyof typeof METRICS;
 
 const shortDate = (d: string) => parseLocalDate(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
+// Keyed by id so a related exercise starts with fresh tabs and filters.
 export default function ExerciseProgressScreen() {
   const id = Number(useParams().id);
+  return <Exercise key={id} id={id} />;
+}
+
+function Exercise({ id }: { id: number }) {
   const navigate = useNavigate();
   const [range, setRange] = useState<Range>('3M');
   const [metric, setMetric] = useState<Metric>('topWeight');
   const [grip, setGrip] = useState<Grip | 'all'>('all');
+  const [tab, setTab] = useState<'about' | 'progress'>('about');
+  const [linking, setLinking] = useState(false);
+  const top = useRef<HTMLDivElement>(null);
   const data = useDbQuery(async () => {
     const [exercise, sessions] = await Promise.all([getExercise(id), sessionsByExercise({ exerciseId: id })]);
     return { exercise, sessions: sessions.get(id) ?? [] };
   }, [id], { key: 'exercise-progress' });
+  const catalogId = data?.exercise?.catalogId;
+  // Reference data: fetched once per visit, not after every change.
+  const entry = useDbQuery(
+    async () => (catalogId ? getCatalogEntry(catalogId) : undefined),
+    [catalogId],
+    { key: 'catalog-entry', refetch: false },
+  );
+  const loaded = !!data;
+  useEffect(() => top.current?.scrollIntoView(), [loaded]);
 
   if (!data) return null;
   const { exercise, sessions: allSessions } = data;
@@ -57,6 +79,19 @@ export default function ExerciseProgressScreen() {
   const from = rangeStart(range, today());
   const shown = stats.filter((s) => s.date >= from);
   const pr = personalRecords(stats);
+  // Exercises without a catalog entry (custom ones) only have their history to show.
+  const about = !!catalogId && tab === 'about';
+
+  const link = async (otherId: number) => {
+    setLinking(false);
+    const target = (await listExercises()).find((e) => e.id === otherId)?.catalogId;
+    if (!target) return;
+    try {
+      await linkExercise(id, target);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Could not link the exercise.');
+    }
+  };
 
   const remove = async () => {
     const msg = exercise.isCustom
@@ -68,10 +103,15 @@ export default function ExerciseProgressScreen() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={top} className="flex flex-col gap-4">
       <BackButton />
-      {exercise.image && (
-        <img src={exercise.image} alt={exercise.name} className="aspect-[3/2] w-full rounded-2xl bg-white object-cover" />
+      {about && entry ? (
+        <ExercisePoses entry={entry} />
+      ) : (
+        !catalogId &&
+        exercise.image && (
+          <img src={exercise.image} alt={exercise.name} className="aspect-[3/2] w-full rounded-2xl bg-white object-cover" />
+        )
       )}
       <div className="flex items-center gap-3">
         <MuscleIcon group={exercise.muscleGroup} size={52} />
@@ -91,6 +131,24 @@ export default function ExerciseProgressScreen() {
         </button>
       </div>
 
+      {catalogId && (
+        <div className="grid grid-cols-2 gap-2" role="tablist">
+          {(['about', 'progress'] as const).map((t) => (
+            <button key={t} role="tab" aria-selected={t === tab} className={btn.chip(t === tab)} onClick={() => setTab(t)}>
+              {label(t)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {about ? (
+        entry ? (
+          <ExerciseAbout entry={entry} />
+        ) : (
+          <p className="py-8 text-center text-sm text-neutral-500">No details available (are you offline?)</p>
+        )
+      ) : (
+        <>
       {usedGrips.length > 0 && (
         <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
           <button className={btn.chip(grip === 'all')} onClick={() => setGrip('all')}>
@@ -197,6 +255,9 @@ export default function ExerciseProgressScreen() {
           {exercise.image && (
             <Row icon="image" iconBg="ui-row-muted" title="Remove photo" onClick={() => setExerciseImage(id, null)} />
           )}
+          {!!exercise.isCustom && !catalogId && id > 0 && (
+            <Row icon="swap" iconBg="ui-row-accent" title="Link to library exercise" onClick={() => setLinking(true)} chevron />
+          )}
           {!exercise.isCardio && (
             <Row icon="grip" iconBg="bg-violet-600 text-white" title="Grips">
               <GripSetPicker value={exercise.gripSet} onChange={(v) => setGripSet(id, v)} />
@@ -214,6 +275,11 @@ export default function ExerciseProgressScreen() {
           )}
         </div>
       </section>
+        </>
+      )}
+      {linking && (
+        <ExercisePicker single libraryOnly title="Link to library exercise" onDone={([other]) => void link(other!)} onClose={() => setLinking(false)} />
+      )}
     </div>
   );
 }
