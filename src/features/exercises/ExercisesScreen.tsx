@@ -21,7 +21,7 @@ export default function ExercisesScreen() {
           </button>
         }
       />
-      <ExerciseList archived={archived} chevron onPick={(e) => navigate(`/exercises/${e.id}`)} />
+      <ExerciseList archived={archived} chevron remember onPick={(e) => navigate(`/exercises/${e.id}`)} />
       <button
         className="inline-flex items-center justify-center gap-2 py-3 text-sm text-neutral-500"
         onClick={() => setArchived(!archived)}

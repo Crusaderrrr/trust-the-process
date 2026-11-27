@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import ExerciseThumb from "../../components/ExerciseThumb";
 import Icon from "../../components/Icon";
 import { btn, card, input, SectionTitle } from "../../components/ui";
@@ -13,6 +13,9 @@ import {
   type MuscleGroup,
 } from "../../repositories/exercises";
 
+// The Exercises tab's chosen group, kept while an exercise is open (until the app is reloaded).
+let rememberedMuscle: MuscleGroup | null = null;
+
 /**
  * Search + muscle-group filter over the exercise library, with a Favourites section on top.
  * Used by the Exercises tab and the workout picker.
@@ -23,6 +26,7 @@ export default function ExerciseList({
   chevron = false,
   only,
   libraryOnly = false,
+  remember = false,
   onPick,
 }: {
   archived?: boolean;
@@ -32,6 +36,8 @@ export default function ExerciseList({
   only?: MuscleGroup;
   /** Hide own exercises and ones without a catalog entry. */
   libraryOnly?: boolean;
+  /** Come back to the same muscle group next time. */
+  remember?: boolean;
   onPick: (e: Exercise) => void;
 }) {
   // The device copy shows at once; the server's list replaces it when it arrives.
@@ -44,7 +50,16 @@ export default function ExerciseList({
   });
   const [search, setSearch] = useState("");
   const [popped, setPopped] = useState<number | null>(null); // star that was just toggled
-  const [muscle, setMuscle] = useState<MuscleGroup | null>(only ?? null);
+  const [muscle, setMuscleState] = useState<MuscleGroup | null>(only ?? (remember ? rememberedMuscle : null));
+  const setMuscle = (m: MuscleGroup | null) => {
+    if (remember) rememberedMuscle = m;
+    setMuscleState(m);
+  };
+  // The chip row scrolls sideways: bring a remembered group into view.
+  const showChosen = useCallback((row: HTMLDivElement | null) => {
+    const chip = row?.querySelector<HTMLElement>("[aria-pressed=true]");
+    if (row && chip) row.scrollLeft = chip.offsetLeft - row.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2;
+  }, []);
 
   const q = search.trim().toLowerCase();
   const shown = (all ?? []).filter(
@@ -110,7 +125,7 @@ export default function ExerciseList({
         />
       </div>
       {!only && (
-        <div className="no-scrollbar -mx-4 flex shrink-0 gap-2 overflow-x-auto px-4 pb-1">
+        <div ref={showChosen} className="no-scrollbar -mx-4 flex shrink-0 gap-2 overflow-x-auto px-4 pb-1">
           <button
             className={btn.chip(muscle === null)}
             onClick={() => setMuscle(null)}
@@ -120,6 +135,7 @@ export default function ExerciseList({
           {MUSCLE_GROUPS.map((m) => (
             <button
               key={m}
+              aria-pressed={muscle === m}
               className={btn.chip(muscle === m)}
               onClick={() => setMuscle(muscle === m ? null : m)}
             >
