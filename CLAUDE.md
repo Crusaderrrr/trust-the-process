@@ -36,7 +36,9 @@ Test account `dev` on the running app (production DB, not admin): log in there t
 ## Architecture rules
 - UI → `src/repositories/` → `src/api/client.ts` → Hono routes in `server/routes/` → Postgres.
   SQL only in `server/` (migrations in `server/migrations/`, never edit an applied one).
-- Every row is owned by a user; every query filters by the session's user.
+- Every row is owned by a user; every query filters by the session's user. Exception: `catalog_exercise` /
+  `catalog_image`, shared reference data (RepDB, `server/catalog.ts`). Its licence forbids republishing:
+  never commit the dataset or its images.
 - `src/domain/` is pure TypeScript: no React, no DB/API imports. Every function there has tests.
 - Active workout is local-first: edits apply to a cached document, mirrored to `localStorage`,
   saved whole with debounce + retry (`repositories/workoutStore.ts`). Persist every action.

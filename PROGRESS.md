@@ -62,7 +62,7 @@ Live URL: https://crusaderrrr.github.io/
 - [x] **Data-loss fix**: `preserveOnInitFailure: true` (see SPEC §7)
 
 ## Feedback round 2 (2026-10-22) ✅
-- [x] Exercise photos (free-exercise-db, public domain) for all 52 seed exercises, bundled offline
+- [x] Exercise photos (free-exercise-db, public domain) for all 52 seed exercises, bundled offline (replaced in 0.7.0)
 - [x] Own photo for any exercise (new-exercise sheet + progress page), stored in DB (migration 3)
 - [x] Hevy-style illustrations need a paid license — not used (owner chose free photos)
 - [x] DB install retries; stress-tested close→reopen cycles and tab takeover without data loss
@@ -229,3 +229,9 @@ Live URL: https://crusaderrrr.github.io/
 ## Today first block (2026-11-26)
 - [x] Glassy style for the start-workout block, its buttons and the day icon; style noted in CLAUDE.md (0.5.1)
 - [x] Glass look on all tabs; Settings → Theme (Glass / Original), themes are CSS files in `src/themes/`
+
+## 0.7.0 — RepDB exercise catalog
+- [x] ~700 exercises, start/peak pictures and muscle pictures from RepDB; stored in Postgres, never in git
+- [x] Exercise screen: About (muscles, equipment, how-to, form tips, related) | Progress
+- [x] Own exercises link to a catalog entry by name ("Butterfly" → Pec Deck) or by hand
+- [ ] After deploying: run `import-repdb` once against production (see README)

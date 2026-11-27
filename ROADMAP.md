@@ -63,9 +63,7 @@ starts only after it passes. Nothing public happens before the security gate in 
 Only what makes someone switch from Hevy/Strong:
 - **CSV import** from Hevy and Strong (later Fitbod/JEFIT). Pure parsers in `src/domain/`
   tested against real export files; re-importing replaces the data instead of duplicating it.
-- **More exercises**: grow the library from free-exercise-db (public domain, ~800 exercises with
-  photos; the source of the current photos) — curated, not dumped. Add equipment + muscle
-  metadata and better search.
+- **More exercises** (done in 0.7.0 with the RepDB catalog): what is left is better search.
 - **Routines (basic)**: Hevy users expect them, and the import should bring theirs over.
   Periodization comes after launch (see `TODO.md`).
 - Onboarding: first-run flow (units are kg, set up a plan, import from another app).

@@ -36,6 +36,19 @@ export default defineConfig({
         // Web Push handler (public/push-sw.js): shows the rest timer's "Time's up" while the app is closed.
         importScripts: ['push-sw.js'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Catalog pictures and texts (~20 MB in all) aren't precached: kept as they are first seen.
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/catalog/images/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'catalog-images', expiration: { maxEntries: 2000 } },
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/catalog/'),
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'catalog' },
+          },
+        ],
         // SW scope is the whole origin; don't hijack navigations to other Pages repos.
         navigateFallbackAllowlist: [/^\/$/, /^\/index\.html$/],
       },

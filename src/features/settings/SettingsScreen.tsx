@@ -169,7 +169,11 @@ export default function SettingsScreen() {
           />
         </div>
         <p className="px-1 text-xs text-neutral-500">
-          Trust The Process · Exercise photos: free-exercise-db (public domain) · Icons: Material Symbols
+          Trust The Process ·{' '}
+          <a className="underline" href="https://repdb.co" target="_blank" rel="noreferrer">
+            Exercise data by RepDB (repdb.co)
+          </a>{' '}
+          · Icons: Material Symbols
         </p>
       </section>
 
