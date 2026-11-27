@@ -13,7 +13,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // A new version waits until the user accepts it (components/UpdateBanner.tsx).
+      registerType: 'prompt',
       includeAssets: ['apple-touch-icon.png', 'favicon.png'],
       manifest: {
         name: 'Trust The Process',
