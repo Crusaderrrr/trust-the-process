@@ -42,7 +42,7 @@ export default function ExercisePicker({
       )}
       <ExerciseList only={only} libraryOnly={libraryOnly} selected={new Set(selected)} onPick={(e) => toggle(e.id)} />
       {!single && (
-        <div className="sticky bottom-0 bg-neutral-900 pt-3">
+        <div className="sticky bottom-0 pt-3 backdrop-blur-xl">
           <button className={`${btn.primary} w-full`} disabled={!selected.length} onClick={() => onDone(selected)}>
             <Icon name="add" />
             Add {selected.length || ''} exercise{selected.length === 1 ? '' : 's'}

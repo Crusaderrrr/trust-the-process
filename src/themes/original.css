@@ -2,6 +2,7 @@
 @layer components {
   [data-theme='original'] {
     /* surfaces */
+    .ui-sheet { @apply bg-neutral-900 ring-1 ring-white/[0.06]; }
     .ui-card { @apply rounded-3xl bg-neutral-900 ring-1 ring-neutral-700/70 shadow-[0_12px_28px_rgba(0,0,0,0.28)]; }
     .ui-card-press { @apply active:bg-neutral-800; }
     .ui-input { @apply bg-neutral-800/80 ring-1 ring-white/[0.04]; }

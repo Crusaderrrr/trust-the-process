@@ -19,7 +19,7 @@ export default function Sheet({
   return createPortal(
     <div className="fade-in fixed inset-0 z-40 flex flex-col justify-end bg-black/70 backdrop-blur-[2px]" onClick={onClose}>
       <div
-        className={`sheet-up flex flex-col rounded-t-3xl bg-neutral-900 pb-[max(1rem,env(safe-area-inset-bottom))] ring-1 ring-white/[0.06] ${
+        className={`ui-sheet sheet-up flex flex-col rounded-t-3xl pb-[max(1rem,env(safe-area-inset-bottom))] ${
           full ? 'h-[92%]' : 'max-h-[85%]'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -28,7 +28,7 @@ export default function Sheet({
         <div className="flex items-center justify-between px-4 pt-2 pb-2">
           <h2 className="text-lg font-semibold">{title}</h2>
           <button
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800 text-neutral-400"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-neutral-400"
             onClick={onClose}
             aria-label="Close"
           >
