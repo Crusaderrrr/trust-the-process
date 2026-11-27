@@ -14,7 +14,7 @@ const record = z.object({
   category: z.string(),
   equipment: z.string().nullish(),
   variation_group: z.string().nullish(),
-  primary_muscles: z.array(z.string()),
+  primary_muscles: z.array(z.string()).default([]), // absent on savasana
   secondary_muscles: z.array(z.string()).default([]),
   instructions_en: z.array(z.string()),
   tips_en: z.array(z.string()).default([]),

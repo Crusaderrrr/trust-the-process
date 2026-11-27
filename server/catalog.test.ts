@@ -30,7 +30,7 @@ const entries = [
   entry('lat-pulldown', 'Lat Pulldown'),
   entry('close-grip-lat-pulldown', 'Close Grip Lat Pulldown'),
   entry('pec-deck', 'Pec Deck', { equipment: 'pec_deck', primary_muscles: ['pectoralis_major'] }),
-  entry('straight-arm-pulldown', 'Straight-Arm Pulldown'),
+  entry('straight-arm-pulldown', 'Straight-Arm Pulldown', { primary_muscles: undefined, secondary_muscles: undefined, tips_en: undefined }),
   entry('treadmill-running', 'Treadmill Running', { category: 'cardio', equipment: 'treadmill' }),
 ];
 
@@ -86,7 +86,7 @@ describe('catalog sync', () => {
   });
 
   it('adds the missing entries once, without the grip variants', async () => {
-    expect(await row('Straight-Arm Pulldown')).toMatchObject({ muscle_group: 'back', equipment: 'cable', is_custom: false });
+    expect(await row('Straight-Arm Pulldown')).toMatchObject({ muscle_group: 'full_body', equipment: 'cable', is_custom: false });
     expect(await row('Close Grip Lat Pulldown')).toBeUndefined();
     expect(await row('Treadmill Running')).toBeUndefined();
     const count = async () => (await sql`SELECT 1 FROM exercise WHERE user_id = ${uid}`).length;

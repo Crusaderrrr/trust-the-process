@@ -56,7 +56,7 @@ function Muscles({ title, ids }: { title: string; ids: string[] }) {
 /** Description, muscles, equipment, instructions, tips and similar exercises. */
 export default function ExerciseAbout({ entry }: { entry: CatalogEntry }) {
   const navigate = useNavigate();
-  const library = useDbQuery(() => listExercises(), [], { key: 'exercises' });
+  const library = useDbQuery(() => listExercises(), [false], { key: 'exercises' });
   const related = entry.related.flatMap((id) => library?.find((e) => e.catalogId === id) ?? []);
   const equipment = entry.equipment ? equipmentInfo(entry.equipment) : null;
 

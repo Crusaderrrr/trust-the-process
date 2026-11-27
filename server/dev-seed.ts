@@ -180,11 +180,11 @@ async function setUpExercises(): Promise<(name: string) => number> {
   await api('PUT', '/settings', { defaultRestSeconds: DEFAULT_REST });
   await api('PUT', '/settings/template-colors/upper', { color: '#a78bfa' });
 
-  // An own photo is stored as a JPEG data URL; this one is a 1x1 placeholder.
+  // An own photo is stored as a data URL; this one is a 1x1 placeholder.
   const photo =
-    '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
   const custom = [
-    { name: 'Garage Landmine Press', muscleGroup: 'chest', equipment: 'other', image: `data:image/jpeg;base64,${photo}`, gripSet: null },
+    { name: 'Garage Landmine Press', muscleGroup: 'chest', equipment: 'other', image: photo, gripSet: null },
     { name: 'Chest-Supported Row', muscleGroup: 'back', equipment: 'machine', image: null, gripSet: 'back' },
     { name: 'Water Rower', muscleGroup: 'cardio', equipment: 'machine', image: null, gripSet: null },
     { name: 'Sled Push', muscleGroup: 'full_body', equipment: 'other', image: null, gripSet: null }, // no history, so it can be hard-deleted

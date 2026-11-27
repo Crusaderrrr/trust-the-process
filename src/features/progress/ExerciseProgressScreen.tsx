@@ -61,12 +61,15 @@ function Exercise({ id }: { id: number }) {
   const catalogId = data?.exercise?.catalogId;
   // Reference data: fetched once per visit, not after every change.
   const entry = useDbQuery(
-    async () => (catalogId ? getCatalogEntry(catalogId) : undefined),
+    async () => (catalogId ? getCatalogEntry(catalogId) : null),
     [catalogId],
     { key: 'catalog-entry', refetch: false },
   );
   const loaded = !!data;
-  useEffect(() => top.current?.scrollIntoView(), [loaded]);
+  // Braces matter: newer browsers return a Promise here, which React would call as a cleanup.
+  useEffect(() => {
+    top.current?.scrollIntoView();
+  }, [loaded]);
 
   if (!data) return null;
   const { exercise, sessions: allSessions } = data;
@@ -145,7 +148,7 @@ function Exercise({ id }: { id: number }) {
         entry ? (
           <ExerciseAbout entry={entry} />
         ) : (
-          <p className="py-8 text-center text-sm text-neutral-500">No details available (are you offline?)</p>
+          entry === null && <p className="py-8 text-center text-sm text-neutral-500">No details available (are you offline?)</p>
         )
       ) : (
         <>
