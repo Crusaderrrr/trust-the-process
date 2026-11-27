@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { catalogImageUrl, type CatalogData } from '../catalog.js';
 import type { Sql } from '../db.js';
 import { lastSets, previousSets } from '../previous.js';
 import { DATE_RE, EQUIPMENT, GRIP_SETS, GRIPS, isUniqueViolation, MUSCLE_GROUPS, parseBody, privateRouter, userId } from './util.js';
@@ -61,6 +62,8 @@ const patchBody = z.object({
   // A number pins the rest for this exercise; null makes it follow the default again.
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
 });
+
+const linkBody = z.object({ catalogId: z.string().max(100) });
 
 const previousQuery = z.object({
   grip: z.enum(GRIPS).optional(),
@@ -137,6 +140,41 @@ export function exerciseRoutes(sql: Sql) {
       return true;
     });
     if (!found) return c.json({ error: 'not_found' }, 404);
+    const rows = await sql<ExerciseRow[]>`SELECT ${sql.unsafe(COLS)} FROM exercise WHERE id = ${id}`;
+    return c.json(exerciseJson(rows[0]!));
+  });
+
+  /**
+   * Gives an own exercise the picture and instructions of a catalog entry, keeping its history. The library's
+   * copy of that entry is removed so there aren't two; if both have history nothing changes.
+   */
+  app.post('/:id{[0-9]+}/link', async (c) => {
+    const { data, error } = await parseBody(c, linkBody);
+    if (error) return error;
+    const id = c.req.param('id');
+    const uid = userId(c);
+    const result = await sql.begin(async (tx) => {
+      const [own] = await tx`
+        SELECT 1 FROM exercise WHERE id = ${id} AND user_id = ${uid} AND is_custom AND catalog_id IS NULL FOR UPDATE`;
+      const [entry] = await tx<{ data: CatalogData }[]>`SELECT data FROM catalog_exercise WHERE id = ${data.catalogId}`;
+      if (!own || !entry) return 'not_found' as const;
+      const copies = await tx<{ id: string; used: boolean }[]>`
+        SELECT id, EXISTS (SELECT 1 FROM workout_exercise we WHERE we.exercise_id = exercise.id) AS used
+        FROM exercise WHERE user_id = ${uid} AND catalog_id = ${data.catalogId} AND NOT is_custom FOR UPDATE`;
+      if (copies.some((r) => r.used)) {
+        const [mine] = await tx`SELECT 1 FROM workout_exercise WHERE exercise_id = ${id} LIMIT 1`;
+        if (mine) return 'both_used' as const;
+      }
+      for (const copy of copies) if (!copy.used) await tx`DELETE FROM exercise WHERE id = ${copy.id}`;
+      const picture = entry.data.images.start ?? entry.data.images.main;
+      await tx`UPDATE exercise SET catalog_id = ${data.catalogId}, image = ${picture ? catalogImageUrl(picture) : null}
+               WHERE id = ${id}`;
+      return 'linked' as const;
+    });
+    if (result === 'not_found') return c.json({ error: 'not_found' }, 404);
+    if (result === 'both_used') {
+      return c.json({ error: 'both_used', message: 'Both exercises have workout history, so they cannot be combined.' }, 409);
+    }
     const rows = await sql<ExerciseRow[]>`SELECT ${sql.unsafe(COLS)} FROM exercise WHERE id = ${id}`;
     return c.json(exerciseJson(rows[0]!));
   });

@@ -6,6 +6,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import type { AuthEnv } from './auth.js';
 import type { Sql } from './db.js';
 import { authRoutes } from './routes/auth.js';
+import { catalogRoutes } from './routes/catalog.js';
 import { exerciseRoutes } from './routes/exercises.js';
 import { inviteRoutes } from './routes/invites.js';
 import { pushRoutes } from './routes/push.js';
@@ -56,6 +57,7 @@ export function createApp(sql: Sql, staticDir: string, push: Push = createPush(s
   });
   app.route('/api/auth', authRoutes(sql));
   app.route('/api/invites', inviteRoutes(sql));
+  app.route('/api/catalog', catalogRoutes(sql));
   app.route('/api/exercises', exerciseRoutes(sql));
   app.route('/api/settings', settingsRoutes(sql));
   app.route('/api/workouts', workoutRoutes(sql, push));

@@ -428,3 +428,68 @@ describe('push subscriptions', () => {
     expect((await call('GET', '/api/push/key', '')).status).toBe(401);
   });
 });
+
+describe('catalog', () => {
+  const data = (name: string, over: object = {}) => ({
+    name,
+    description: 'About it.',
+    category: 'strength',
+    primaryMuscles: ['pectoralis_major'],
+    secondaryMuscles: [],
+    equipment: 'pec_deck',
+    variationGroup: 'chest-fly',
+    instructions: ['Squeeze.'],
+    tips: [],
+    images: { start: 'pec-deck-start.webp' },
+    ...over,
+  });
+  const custom = async (name: string): Promise<number> =>
+    (await call('POST', '/api/exercises', ann, { name, muscleGroup: 'chest', equipment: 'machine', image: null, gripSet: null })).json.id;
+  const copy = async (catalogId: string): Promise<number> => {
+    const [row] = await sql<{ id: string }[]>`
+      INSERT INTO exercise (user_id, name, muscle_group, equipment, catalog_id, rest_seconds)
+      SELECT id, ${catalogId}, 'chest', 'machine', ${catalogId}, 120 FROM app_user WHERE username = 'ann'
+      RETURNING id`;
+    return Number(row!.id);
+  };
+  const log = async (exercise: number) => {
+    const w = doc([{ exerciseId: exercise, sets: [{ weightKg: 40, reps: 10 }] }]);
+    expect((await call('PUT', `/api/workouts/${w.id}`, ann, w)).status).toBe(200);
+  };
+
+  beforeAll(async () => {
+    for (const [id, name] of [['pec-deck', 'Pec Deck'], ['machine-chest-fly', 'Machine Chest Fly']] as const) {
+      await sql`INSERT INTO catalog_exercise (id, data) VALUES (${id}, ${sql.json(data(name))})`;
+    }
+    await sql`INSERT INTO catalog_image (name, bytes) VALUES ('pec-deck-start.webp', ${Buffer.from('img')})`;
+  });
+
+  it('serves entries with related ones, and images, to signed-in users only', async () => {
+    expect((await call('GET', '/api/catalog/pec-deck', ann)).json).toMatchObject({ name: 'Pec Deck', related: ['machine-chest-fly'] });
+    expect((await call('GET', '/api/catalog/nope', ann)).status).toBe(404);
+    const image = await app.request('/api/catalog/images/pec-deck-start.webp', { headers: { cookie: ann } });
+    expect(image.headers.get('content-type')).toBe('image/webp');
+    expect(await image.text()).toBe('img');
+    expect((await app.request('/api/catalog/images/pec-deck-start.webp')).status).toBe(401);
+  });
+
+  it('links an own exercise and removes the unused library copy', async () => {
+    const duplicate = await copy('pec-deck');
+    const mine = await custom('My pec thing');
+    const res = await call('POST', `/api/exercises/${mine}/link`, ann, { catalogId: 'pec-deck' });
+    expect(res.json).toMatchObject({ catalogId: 'pec-deck', image: '/api/catalog/images/pec-deck-start.webp', isCustom: 1 });
+    expect((await call('GET', `/api/exercises/${duplicate}`, ann)).status).toBe(404);
+    // someone else's exercise, and an already linked one, can't be linked
+    expect((await call('POST', `/api/exercises/${mine}/link`, bob, { catalogId: 'pec-deck' })).status).toBe(404);
+    expect((await call('POST', `/api/exercises/${mine}/link`, ann, { catalogId: 'pec-deck' })).status).toBe(404);
+  });
+
+  it('refuses to combine two exercises that both have history', async () => {
+    const library = await copy('machine-chest-fly');
+    const mine = await custom('My fly');
+    await log(library);
+    await log(mine);
+    expect((await call('POST', `/api/exercises/${mine}/link`, ann, { catalogId: 'machine-chest-fly' })).status).toBe(409);
+    expect((await call('GET', `/api/exercises/${library}`, ann)).status).toBe(200);
+  });
+});
