@@ -54,7 +54,7 @@ export { cachedLibrary };
 export async function exercisesById(ids: number[]): Promise<Exercise[]> {
   const copy = cachedLibrary(false);
   const found = ids.map((id) => copy.find((e) => e.id === id));
-  if (found.every((e) => e && !e.gripSet)) return found as Exercise[];
+  if (found.every((e) => e && e.grips === null)) return found as Exercise[];
   const all = await listExercises();
   return ids.map((id) => {
     const e = all.find((x) => x.id === id);
@@ -81,7 +81,7 @@ export async function createExercise(e: {
   muscleGroup: MuscleGroup;
   equipment: Equipment;
   image: string | null;
-  gripSet: GripSet | null;
+  grips: Grip[] | null;
 }): Promise<number> {
   const body = { ...e, name: e.name.trim() };
   if (!body.name) throw new Error('Enter a name.');
@@ -115,11 +115,6 @@ async function patch(id: number, body: object) {
 }
 
 export const unarchiveExercise = (id: number) => patch(id, { archived: false });
-
-export async function setGripSet(id: number, gripSet: GripSet | null) {
-  await patch(id, { gripSet });
-  patchOpenDocs((w) => patchExerciseInfo(w, id, { gripSet }));
-}
 
 export async function setExerciseImage(id: number, image: string | null) {
   await patch(id, { image });

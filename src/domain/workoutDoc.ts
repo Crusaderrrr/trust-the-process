@@ -1,6 +1,6 @@
 import type { Feeling, Rating } from './checkIn';
 import { toLocalDate } from './dates';
-import { defaultGrip, type Exercise, type Grip, type GripSet, type MuscleGroup } from './exercises';
+import { defaultGrip, type Exercise, type Grip, type MuscleGroup } from './exercises';
 import { nextSetValues, type CompletedValues, type SetType, type SetValues } from './sets';
 import { defaultTitle } from './workout';
 
@@ -44,7 +44,7 @@ export type WorkoutExercise = {
   restSeconds: number;
   /** 1 = rest set in a workout; 0 = follows the default from Settings. */
   restCustom: number;
-  gripSet: GripSet | null;
+  grips: Grip[] | null;
   /** Treadmill-style: sets log time / speed / incline instead of kg / reps. */
   isCardio: number;
   grip: Grip | null;
@@ -67,7 +67,7 @@ const FIELD_KEY = { weight_kg: 'weightKg', reps: 'reps', speed_kmh: 'speedKmh', 
 
 export type ExerciseInfo = Pick<
   Exercise,
-  'id' | 'name' | 'muscleGroup' | 'image' | 'restSeconds' | 'restCustom' | 'gripSet' | 'isCardio'
+  'id' | 'name' | 'muscleGroup' | 'image' | 'restSeconds' | 'restCustom' | 'grips' | 'isCardio'
 >;
 
 // ---- creating ----
@@ -132,7 +132,7 @@ export function addExercises(
       image: x.image,
       restSeconds: x.restSeconds,
       restCustom: x.restCustom,
-      gripSet: x.gripSet,
+      grips: x.grips,
       isCardio: x.isCardio,
       grip,
       note: null,
@@ -170,7 +170,7 @@ export const removeExercise = (w: WorkoutDetail, weId: string): WorkoutDetail =>
   exercises: w.exercises.filter((e) => e.id !== weId),
 });
 
-/** Swaps the exercise but keeps the logged sets; the grip is kept only between exercises of the same grip set. */
+/** Swaps the exercise but keeps the logged sets; the grip is kept if the new exercise offers it. */
 export const replaceExercise = (
   w: WorkoutDetail,
   weId: string,
@@ -185,16 +185,16 @@ export const replaceExercise = (
     image: x.image,
     restSeconds: x.restSeconds,
     restCustom: x.restCustom,
-    gripSet: x.gripSet,
+    grips: x.grips,
     isCardio: x.isCardio,
-    grip: replacedGrip(e, x.gripSet),
+    grip: replacedGrip(e, x.grips),
     previous,
   }));
 
-/** Grip after switching to an exercise with grip set `set`. */
-export function replacedGrip(e: Pick<WorkoutExercise, 'grip' | 'gripSet'>, set: GripSet | null): Grip | null {
-  if (!set) return null;
-  return e.gripSet === set && e.grip ? e.grip : defaultGrip(set);
+/** Grip after switching to an exercise that offers `grips`. */
+export function replacedGrip(e: Pick<WorkoutExercise, 'grip'>, grips: Grip[] | null): Grip | null {
+  if (!grips?.length) return null;
+  return e.grip && grips.includes(e.grip) ? e.grip : defaultGrip(grips);
 }
 
 export const setGrip = (w: WorkoutDetail, weId: string, grip: Grip, previous: SetValues[]): WorkoutDetail =>
@@ -213,11 +213,11 @@ export function reorderExercises(w: WorkoutDetail, ids: string[]): WorkoutDetail
 export const setExerciseNote = (w: WorkoutDetail, weId: string, note: string): WorkoutDetail =>
   mapExercise(w, weId, (e) => ({ ...e, note: note.trim() || null }));
 
-/** Keeps the exercise's display fields (rest, grips…) in step after it was edited elsewhere. */
+/** Keeps the exercise's display fields (rest, picture) in step after it was edited elsewhere. */
 export const patchExerciseInfo = (
   w: WorkoutDetail,
   exerciseId: number,
-  patch: Partial<Pick<WorkoutExercise, 'restSeconds' | 'restCustom' | 'gripSet' | 'image'>>,
+  patch: Partial<Pick<WorkoutExercise, 'restSeconds' | 'restCustom' | 'image'>>,
 ): WorkoutDetail => ({
   ...w,
   exercises: w.exercises.map((e) => (e.exerciseId === exerciseId ? { ...e, ...patch } : e)),

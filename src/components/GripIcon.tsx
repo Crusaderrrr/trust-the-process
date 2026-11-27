@@ -4,7 +4,7 @@ import type { Grip } from '../domain/exercises';
 // Small line drawings of each grip: a cable coming down to the handle, with the hands as green dots
 // (hand positions on the bar show wide / normal / narrow).
 const hands = (...pts: [number, number][]) =>
-  pts.map(([cx, cy]) => <circle key={cx} cx={cx} cy={cy} r={2.4} fill="#b6ed5d" stroke="none" />);
+  pts.map(([cx, cy]) => <circle key={cx} cx={cx} cy={cy} r={2.4} fill="var(--grip-hand, #b6ed5d)" stroke="none" />);
 const bar = (xs: [number, number]) => (
   <>
     <path d="M12 2v7M2 9h20" />

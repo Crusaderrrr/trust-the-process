@@ -235,3 +235,8 @@ Live URL: https://crusaderrrr.github.io/
 - [x] Exercise screen: About (muscles, equipment, how-to, form tips, related) | Progress
 - [x] Own exercises link to a catalog entry by name ("Butterfly" → Pec Deck) or by hand
 - [ ] After deploying: run `import-repdb` once against production (see README)
+
+## 0.8.0
+- [ ] "New version available · Update" banner instead of silent background updates (check on the phone)
+- [x] Exercises tab keeps the chosen muscle group; glass theme: black background, unfilled controls, solid green
+- [x] Grips are chosen only when creating an exercise (any mix); pop-up sheets follow the theme

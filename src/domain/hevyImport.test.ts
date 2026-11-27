@@ -61,9 +61,9 @@ describe('hevy import', () => {
   });
 
   it('picks a grip the exercise offers, else its default', () => {
-    expect(importGrip('back', 'wide')).toBe('wide');
-    expect(importGrip('back', undefined)).toBe('normal');
-    expect(importGrip('triceps', 'wide')).toBe('rope'); // not a triceps grip
+    expect(importGrip(['wide', 'normal'], 'wide')).toBe('wide');
+    expect(importGrip(['wide', 'normal'], undefined)).toBe('normal');
+    expect(importGrip(['rope', 'v_bar'], 'wide')).toBe('rope'); // not offered
     expect(importGrip(null, 'wide')).toBeNull();
   });
 

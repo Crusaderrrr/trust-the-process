@@ -60,6 +60,11 @@ const LIBRARY: [string, string, string, string, ('back' | 'triceps')?][] = [
 
 export const DEFAULT_REST_SECONDS = 120;
 
+const GRIPS = {
+  back: ['wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal'],
+  triceps: ['rope', 'v_bar', 'straight_bar', 'single_hand'],
+};
+
 /** Library name → catalog id. */
 export const CORE_CATALOG_IDS = new Map<string, string>([
   ...LIBRARY.map(([name, , , id]) => [name.toLowerCase(), id] as const),
@@ -93,10 +98,10 @@ export async function seedExercises(tx: Sql | Tx, userId: number | string): Prom
     name,
     muscle_group,
     equipment,
-    grip_set: gripSet ?? null,
+    grips: gripSet ? GRIPS[gripSet] : null,
     rest_seconds: DEFAULT_REST_SECONDS,
   }));
-  await tx`INSERT INTO exercise ${tx(rows, 'user_id', 'name', 'muscle_group', 'equipment', 'grip_set', 'rest_seconds')}`;
+  await tx`INSERT INTO exercise ${tx(rows, 'user_id', 'name', 'muscle_group', 'equipment', 'grips', 'rest_seconds')}`;
   // Cardio: sets log time / speed / incline; rest timer off by default.
   await tx`INSERT INTO exercise (user_id, name, muscle_group, equipment, is_cardio, rest_seconds, rest_custom)
            VALUES (${userId}, 'Treadmill', 'cardio', 'machine', true, 0, true)`;

@@ -101,10 +101,10 @@ describe('exercise library', () => {
       json.map((e: { name: string }) => e.name.toLowerCase()).sort(),
     );
     const byName = (n: string) => json.find((e: { name: string }) => e.name === n);
-    expect(byName('Lat Pulldown')).toMatchObject({ gripSet: 'back', isCardio: 0, isCustom: 0, restSeconds: 120, image: null, catalogId: null });
+    expect(byName('Lat Pulldown')).toMatchObject({ grips: ['wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal'], isCardio: 0, isCustom: 0, restSeconds: 120, image: null, catalogId: null });
     expect(byName('Treadmill')).toMatchObject({ isCardio: 1, restSeconds: 0, muscleGroup: 'cardio' });
-    expect(byName('Dip').gripSet).toBeNull();
-    expect(byName('Triceps Pushdown').gripSet).toBe('triceps');
+    expect(byName('Dip').grips).toBeNull();
+    expect(byName('Triceps Pushdown').grips).toEqual(['rope', 'v_bar', 'straight_bar', 'single_hand']);
   });
 
   it('keeps accounts apart', async () => {
@@ -123,20 +123,27 @@ describe('exercise library', () => {
       muscleGroup: 'legs',
       equipment: 'other',
       image: null,
-      gripSet: null,
+      grips: null,
     });
     expect(made.status).toBe(201);
     expect(made.json).toMatchObject({ name: 'Sled Push', isCustom: 1, restSeconds: 120 });
 
-    const dup = await call('POST', '/api/exercises', ann, { name: 'sled PUSH', muscleGroup: 'legs', equipment: 'other', image: null, gripSet: null });
+    const dup = await call('POST', '/api/exercises', ann, { name: 'sled PUSH', muscleGroup: 'legs', equipment: 'other', image: null, grips: null });
     expect(dup.status).toBe(409);
     expect(dup.json.message).toMatch(/already exists/);
     // another account may use the same name
-    expect((await call('POST', '/api/exercises', bob, { name: 'Sled Push', muscleGroup: 'legs', equipment: 'other', image: null, gripSet: null })).status).toBe(201);
+    expect((await call('POST', '/api/exercises', bob, { name: 'Sled Push', muscleGroup: 'legs', equipment: 'other', image: null, grips: null })).status).toBe(201);
 
     // the Cardio category makes an exercise time-based, without a rest timer or grips
-    const bike = await call('POST', '/api/exercises', ann, { name: 'Bike', muscleGroup: 'cardio', equipment: 'machine', image: null, gripSet: 'back' });
-    expect(bike.json).toMatchObject({ isCardio: 1, restSeconds: 0, restCustom: 1, gripSet: null, muscleGroup: 'cardio' });
+    const bike = await call('POST', '/api/exercises', ann, { name: 'Bike', muscleGroup: 'cardio', equipment: 'machine', image: null, grips: ['wide'] });
+    expect(bike.json).toMatchObject({ isCardio: 1, restSeconds: 0, restCustom: 1, grips: null, muscleGroup: 'cardio' });
+
+    // any mix of grips, chosen at creation; unknown or empty lists are refused
+    const mix = (name: string, grips: string[]) =>
+      call('POST', '/api/exercises', ann, { name, muscleGroup: 'back', equipment: 'cable', image: null, grips });
+    expect((await mix('Mixed Grip Pull', ['wide', 'rope'])).json.grips).toEqual(['wide', 'rope']);
+    expect((await mix('Odd Grip', ['sideways'])).status).toBe(400);
+    expect((await mix('No Grip', [])).status).toBe(400);
 
     expect((await call('DELETE', `/api/exercises/${made.json.id}`, ann)).json).toEqual({ result: 'deleted' });
     // seeded exercises are archived, never deleted
@@ -162,8 +169,8 @@ describe('exercise library', () => {
   });
 
   it('rejects bad input', async () => {
-    expect((await call('POST', '/api/exercises', ann, { name: '', muscleGroup: 'legs', equipment: 'other', image: null, gripSet: null })).status).toBe(400);
-    expect((await call('POST', '/api/exercises', ann, { name: 'X', muscleGroup: 'tail', equipment: 'other', image: null, gripSet: null })).status).toBe(400);
+    expect((await call('POST', '/api/exercises', ann, { name: '', muscleGroup: 'legs', equipment: 'other', image: null, grips: null })).status).toBe(400);
+    expect((await call('POST', '/api/exercises', ann, { name: 'X', muscleGroup: 'tail', equipment: 'other', image: null, grips: null })).status).toBe(400);
     expect((await call('PUT', '/api/settings', ann, { defaultRestSeconds: -5 })).status).toBe(400);
   });
 });
@@ -212,7 +219,7 @@ describe('workouts', () => {
       name: 'Barbell Bench Press',
       muscleGroup: 'chest',
       isCardio: 0,
-      gripSet: null,
+      grips: null,
       restCustom: 0,
       note: 'felt good',
       previous: [],
@@ -444,7 +451,7 @@ describe('catalog', () => {
     ...over,
   });
   const custom = async (name: string): Promise<number> =>
-    (await call('POST', '/api/exercises', ann, { name, muscleGroup: 'chest', equipment: 'machine', image: null, gripSet: null })).json.id;
+    (await call('POST', '/api/exercises', ann, { name, muscleGroup: 'chest', equipment: 'machine', image: null, grips: null })).json.id;
   const copy = async (catalogId: string): Promise<number> => {
     const [row] = await sql<{ id: string }[]>`
       INSERT INTO exercise (user_id, name, muscle_group, equipment, catalog_id, rest_seconds)

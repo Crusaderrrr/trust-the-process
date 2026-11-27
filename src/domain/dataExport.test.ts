@@ -23,7 +23,7 @@ const bench = {
   image: null,
   restSeconds: 120,
   restCustom: 0,
-  gripSet: null,
+  grips: null,
   isCardio: 0,
   grip: null,
   note: 'felt heavy',
@@ -52,7 +52,7 @@ const workout: WorkoutDetail = {
       image: null,
       restSeconds: 120,
       restCustom: 0,
-      gripSet: null,
+      grips: null,
       isCardio: 0,
       grip: null,
       note: 'felt heavy',
@@ -66,7 +66,7 @@ const workout: WorkoutDetail = {
       exerciseId: 8,
       name: 'Empty',
       muscleGroup: 'back',
-      gripSet: null,
+      grips: null,
       grip: null,
       note: null,
       sets: [set({ completed: 0 })],
@@ -93,7 +93,7 @@ describe('data export', () => {
     expect(w!.exercises[0]).toMatchObject({
       name: 'Bench',
       note: 'felt heavy',
-      meta: { muscleGroup: 'chest', equipment: 'barbell', gripSet: null },
+      meta: { muscleGroup: 'chest', equipment: 'barbell', grips: null },
     });
     expect(w!.exercises[0]!.sets).toHaveLength(1);
   });
@@ -102,4 +102,24 @@ describe('data export', () => {
     expect(() => parseExport('nope')).toThrow(/valid JSON/);
     expect(() => parseExport('{"workouts":[]}')).toThrow(/not a TTP export/);
   });
+});
+
+it('reads files from before grips were listed per exercise', () => {
+  const file = {
+    format: 'ttp-export',
+    version: 1,
+    workouts: [
+      {
+        id: '3f0f5a52-3f7a-4c1e-9d0a-0a1b2c3d4e5f', title: 'Pull', date: '2026-10-01', startedAt: '2026-10-01T10:00:00.000Z',
+        finishedAt: '2026-10-01T11:00:00.000Z', notes: null, rating: null, feelings: [], templateId: null,
+        exercises: [
+          {
+            name: 'Pushdown', muscleGroup: 'triceps', equipment: 'cable', gripSet: 'triceps', grip: 'rope', note: null,
+            sets: [{ setType: 'normal', weightKg: 20, reps: 10, speedKmh: null, inclinePct: null }],
+          },
+        ],
+      },
+    ],
+  };
+  expect(parseExport(JSON.stringify(file))[0]!.exercises[0]!.meta!.grips).toEqual(['rope', 'v_bar', 'straight_bar', 'single_hand']);
 });

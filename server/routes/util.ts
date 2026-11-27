@@ -34,7 +34,6 @@ export function isUniqueViolation(e: unknown, constraint?: string): boolean {
 
 export const MUSCLE_GROUPS = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'legs', 'glutes', 'core', 'full_body', 'cardio'] as const;
 export const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'kettlebell', 'other'] as const;
-export const GRIP_SETS = ['back', 'triceps'] as const;
 export const GRIPS = ['wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal', 'rope', 'v_bar', 'straight_bar', 'single_hand'] as const;
 export const RATINGS = ['good', 'okay', 'bad'] as const;
 export const FEELINGS = [

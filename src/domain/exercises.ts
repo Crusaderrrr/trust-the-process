@@ -14,7 +14,7 @@ export const EQUIPMENT = ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight
 export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
 export type Equipment = (typeof EQUIPMENT)[number];
 
-/** Which grips an exercise offers: lat pulldown / rows vs triceps cable attachments. */
+/** The grips there are, grouped for picking: lat pulldown / rows vs triceps cable attachments. */
 export const GRIP_SETS = {
   back: ['wide', 'normal', 'narrow', 'parallel_wide', 'parallel_normal'],
   triceps: ['rope', 'v_bar', 'straight_bar', 'single_hand'],
@@ -24,9 +24,9 @@ export type Grip = (typeof GRIP_SETS)[GripSet][number];
 export const GRIP_SET_NAMES: Record<GripSet, string> = { back: 'Back', triceps: 'Triceps' };
 /** Every grip, for filters over history (each set's grips are distinct). */
 export const GRIPS: Grip[] = Object.values(GRIP_SETS).flat();
-/** Grip used when an exercise has none logged yet. */
-const DEFAULT_GRIP: Record<GripSet, Grip> = { back: 'normal', triceps: 'rope' };
-export const defaultGrip = (set: GripSet): Grip => DEFAULT_GRIP[set];
+/** Grip used when an exercise has none logged yet; `grips` must not be empty. */
+export const defaultGrip = (grips: readonly Grip[]): Grip =>
+  (['normal', 'rope'] as const).find((g) => grips.includes(g)) ?? grips[0]!;
 export const GRIP_NAMES: Record<Grip, string> = {
   wide: 'Wide',
   normal: 'Normal',
@@ -55,7 +55,7 @@ export type Exercise = {
   /** Bundled photo path or JPEG data URL; null → muscle-group icon. */
   image: string | null;
   /** Grips offered when logged; null = no grip selector. */
-  gripSet: GripSet | null;
+  grips: Grip[] | null;
   /** Logs time / speed / incline instead of kg / reps (treadmill). */
   isCardio: number;
   /** Grip used the last time this exercise was logged (grip exercises only). */

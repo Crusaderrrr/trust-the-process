@@ -4,6 +4,7 @@
 // First run only: pass an invite (`docker exec ttp-app-1 node dist-server/cli.js invite`) as DEV_INVITE.
 import { randomUUID } from 'node:crypto';
 import { addDays, isoWeekday, parseLocalDate, today } from '../src/domain/dates.js';
+import { GRIP_SETS } from '../src/domain/exercises.js';
 
 const BASE_URL = process.env.DEV_BASE_URL ?? 'http://localhost:3000';
 // Fixed on purpose: the wipe below must never run as a real account, whatever .env says.
@@ -184,10 +185,10 @@ async function setUpExercises(): Promise<(name: string) => number> {
   const photo =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
   const custom = [
-    { name: 'Garage Landmine Press', muscleGroup: 'chest', equipment: 'other', image: photo, gripSet: null },
-    { name: 'Chest-Supported Row', muscleGroup: 'back', equipment: 'machine', image: null, gripSet: 'back' },
-    { name: 'Water Rower', muscleGroup: 'cardio', equipment: 'machine', image: null, gripSet: null },
-    { name: 'Sled Push', muscleGroup: 'full_body', equipment: 'other', image: null, gripSet: null }, // no history, so it can be hard-deleted
+    { name: 'Garage Landmine Press', muscleGroup: 'chest', equipment: 'other', image: photo, grips: null },
+    { name: 'Chest-Supported Row', muscleGroup: 'back', equipment: 'machine', image: null, grips: [...GRIP_SETS.back] },
+    { name: 'Water Rower', muscleGroup: 'cardio', equipment: 'machine', image: null, grips: null },
+    { name: 'Sled Push', muscleGroup: 'full_body', equipment: 'other', image: null, grips: null }, // no history, so it can be hard-deleted
   ];
   const list = async () => [...(await api<Exercise[]>('GET', '/exercises')), ...(await api<Exercise[]>('GET', '/exercises?archived=1'))];
   const existing = new Set((await list()).map((e) => e.name));

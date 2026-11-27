@@ -1,6 +1,6 @@
 import { toLocalDate } from './dates';
 import type { Feeling, Rating } from './checkIn';
-import { defaultGrip, GRIP_SETS, type Equipment, type Grip, type GripSet, type MuscleGroup } from './exercises';
+import { defaultGrip, type Equipment, type Grip, type MuscleGroup } from './exercises';
 import type { SetType } from './sets';
 
 // Hevy's "Export workout data" CSV: one row per set, columns
@@ -24,7 +24,7 @@ export type ImportExercise = {
   meta?: {
     muscleGroup: MuscleGroup;
     equipment: Equipment;
-    gripSet: GripSet | null;
+    grips: Grip[] | null;
   };
 };
 export type ImportWorkout = {
@@ -83,9 +83,9 @@ export const HEVY_RENAMED = Object.entries(HEVY_ALIASES)
   .map(([hevy]) => hevy);
 
 /** Grip to log: the wanted one if the exercise offers it, else the exercise's default, else none. */
-export function importGrip(gripSet: GripSet | null, wanted: Grip | null | undefined): Grip | null {
-  if (!gripSet) return null;
-  return wanted && (GRIP_SETS[gripSet] as readonly Grip[]).includes(wanted) ? wanted : defaultGrip(gripSet);
+export function importGrip(grips: Grip[] | null, wanted: Grip | null | undefined): Grip | null {
+  if (!grips?.length) return null;
+  return wanted && grips.includes(wanted) ? wanted : defaultGrip(grips);
 }
 
 /** RFC 4180: quoted fields may hold commas, doubled quotes and newlines. */

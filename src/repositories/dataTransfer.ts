@@ -68,7 +68,7 @@ async function importWorkouts(
     }
     const created = await api<Exercise>('POST', '/exercises', {
       name: name.slice(0, 80),
-      ...(meta ?? { ...guessExercise(name), gripSet: null }),
+      ...(meta ?? { ...guessExercise(name), grips: null }),
       image: null,
     });
     byName.set(name.toLowerCase(), created);
@@ -86,7 +86,7 @@ async function importWorkouts(
         exerciseId: exercise.id,
         position,
         // Hevy has no grips: a grip exercise gets the variant its Hevy name implies, else the default.
-        grip: e.grip === null ? null : importGrip(exercise.gripSet, e.grip),
+        grip: e.grip === null ? null : importGrip(exercise.grips, e.grip),
         note: e.note,
         sets: e.sets.map((s, i) => ({
           id: crypto.randomUUID(),

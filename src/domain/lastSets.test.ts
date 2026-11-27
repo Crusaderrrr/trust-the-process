@@ -28,7 +28,7 @@ describe('pickPrevious', () => {
 });
 
 describe('withFinished', () => {
-  const bench: ExerciseInfo = { id: 1, name: 'Bench', muscleGroup: 'chest', image: null, restSeconds: 120, restCustom: 0, gripSet: null, isCardio: 0 };
+  const bench: ExerciseInfo = { id: 1, name: 'Bench', muscleGroup: 'chest', image: null, restSeconds: 120, restCustom: 0, grips: null, isCardio: 0 };
   const finished = (date: string) => {
     let w = addExercises(newWorkout('w', new Date(`${date}T17:00:00.000Z`), date), [
       { weId: 'we', setIds: ['s1', 's2'], exercise: bench, grip: null, previous: [] },

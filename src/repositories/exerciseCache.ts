@@ -1,5 +1,5 @@
 import { api, ApiError } from '../api/client';
-import type { Equipment, Exercise, GripSet, MuscleGroup } from '../domain/exercises';
+import type { Equipment, Exercise, Grip, MuscleGroup } from '../domain/exercises';
 
 // Offline support for the exercise library: the last list the server sent is kept in localStorage,
 // and exercises created without a connection wait in a queue until the server is reachable again.
@@ -11,7 +11,7 @@ export type NewExercise = {
   muscleGroup: MuscleGroup;
   equipment: Equipment;
   image: string | null;
-  gripSet: GripSet | null;
+  grips: Grip[] | null;
 };
 type Pending = { tempId: number; body: NewExercise };
 
@@ -88,7 +88,7 @@ export const pendingExercises = (): Exercise[] =>
       restCustom: cardio ? 1 : 0,
       favorite: 0,
       image: body.image,
-      gripSet: cardio ? null : body.gripSet,
+      grips: cardio ? null : (body.grips ?? null),
       isCardio: cardio ? 1 : 0,
       lastGrip: null,
       catalogId: null,

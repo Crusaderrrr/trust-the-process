@@ -13,7 +13,7 @@ import { sessionsByExercise } from '../../repositories/progress';
 import {
   getDefaultRest,
   GRIP_NAMES,
-  GRIP_SETS,
+  GRIPS,
   resetRestSeconds,
   setRestSeconds,
 } from '../../repositories/exercises';
@@ -142,8 +142,8 @@ export default function ExerciseCard({
                   {/* Invisible full-screen layer: a tap anywhere else closes the dropdown. */}
                   <button className="fixed inset-0 z-10 cursor-default" onClick={close} aria-label="Close grip list" />
                   <div className="absolute left-0 top-full z-20 mt-1 min-w-48 overflow-hidden rounded-xl bg-neutral-800 py-1 shadow-xl ring-1 ring-neutral-700">
-                    {/* a doc cached before grip sets existed has no gripSet; its grips were all back grips */}
-                    {GRIP_SETS[we.gripSet ?? 'back'].map((g) => (
+                    {/* a workout cached before 0.8.0 has no `grips`; offer every grip until it is reloaded */}
+                    {(we.grips ?? GRIPS).map((g) => (
                       <button
                         key={g}
                         className={`flex w-full items-center gap-3 px-3 py-2.5 text-left active:bg-neutral-700 ${g === we.grip ? 'text-green-500' : 'text-neutral-100'}`}

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { FEELINGS, RATINGS } from './checkIn';
-import { EQUIPMENT, GRIP_SETS, GRIPS, MUSCLE_GROUPS, type Exercise, type GripSet } from './exercises';
+import { EQUIPMENT, GRIP_SETS, GRIPS, MUSCLE_GROUPS, type Exercise, type Grip, type GripSet } from './exercises';
 import type { ImportWorkout } from './hevyImport';
 import { SET_TYPES } from './sets';
 import type { WorkoutDetail } from './workoutDoc';
@@ -33,7 +33,9 @@ const workoutSchema = z.object({
       name: z.string().min(1),
       muscleGroup: z.enum(MUSCLE_GROUPS),
       equipment: z.enum(EQUIPMENT),
-      gripSet: z.enum(Object.keys(GRIP_SETS) as [GripSet, ...GripSet[]]).nullable(),
+      grips: z.array(z.enum(GRIPS)).nullable().optional(),
+      // Files from before 0.8.0 named a set instead of listing grips.
+      gripSet: z.enum(Object.keys(GRIP_SETS) as [GripSet, ...GripSet[]]).nullable().optional(),
       grip: z.enum(GRIPS).nullable(),
       note: z.string().nullable(),
       sets: z.array(setSchema),
@@ -74,7 +76,7 @@ export function buildExport(
           name: e.name,
           muscleGroup: e.muscleGroup,
           equipment: equipment.get(e.exerciseId) ?? 'other',
-          gripSet: e.gripSet,
+          grips: e.grips,
           grip: e.grip,
           note: e.note,
           sets: e.sets
@@ -106,10 +108,10 @@ export function parseExport(text: string): ImportWorkout[] {
     ...w,
     key: w.id,
     exercises: w.exercises
-      .map(({ muscleGroup, equipment, gripSet, ...e }) => ({
-        ...e,
-        meta: { muscleGroup, equipment, gripSet },
-      }))
+      .map(({ muscleGroup, equipment, grips, gripSet, ...e }) => {
+        const offered: Grip[] | null = grips ?? (gripSet ? [...GRIP_SETS[gripSet]] : null);
+        return { ...e, meta: { muscleGroup, equipment, grips: offered } };
+      })
       .filter((e) => e.sets.length > 0),
   }));
 }

@@ -19,13 +19,11 @@ import {
   removeExercise,
   setExerciseImage,
   setFavorite,
-  setGripSet,
   unarchiveExercise,
   type Grip,
 } from '../../repositories/exercises';
 import { sessionsByExercise } from '../../repositories/progress';
 import ExercisePicker from '../exercises/ExercisePicker';
-import { GripSetPicker } from '../exercises/NewExerciseSheet';
 import { photoToDataUrl } from '../exercises/photo';
 import { formatDate } from '../history/HistoryScreen';
 import { SET_TYPE_COLOR } from '../workout/SetRow';
@@ -260,11 +258,6 @@ function Exercise({ id }: { id: number }) {
           )}
           {!!exercise.isCustom && !catalogId && id > 0 && (
             <Row icon="swap" iconBg="ui-row-accent" title="Link to library exercise" onClick={() => setLinking(true)} chevron />
-          )}
-          {!exercise.isCardio && (
-            <Row icon="grip" iconBg="bg-violet-600 text-white" title="Grips">
-              <GripSetPicker value={exercise.gripSet} onChange={(v) => setGripSet(id, v)} />
-            </Row>
           )}
           {exercise.archived ? (
             <Row icon="unarchive" iconBg="ui-row-accent" title="Unarchive exercise" onClick={() => unarchiveExercise(id)} />
